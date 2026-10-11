@@ -7,9 +7,14 @@ import { BEATS } from './beats'
  * `beat` is continuous: 0 at the first beat, BEATS.length - 1 at the last. The scene reads it every frame;
  * listeners hear only when the whole-number beat changes.
  */
+const params = new URLSearchParams(window.location.search)
+
 export const scroll = {
   beat: 0,
-  reducedMotion: false,
+  /** ?motion=reduced: one still frame. The OS reduced-motion setting is deliberately ignored. */
+  reducedMotion: params.get('motion') === 'reduced',
+  /** ?capture=1: a recording drives scroll and time frame by frame (see App's useCaptureBridge). */
+  capture: params.get('capture') === '1',
 }
 
 type Listener = (beat: number) => void
@@ -35,8 +40,7 @@ export function scrollToTarget(selector: string) {
  * Wheel input is smoothed by Lenis, so notched mouse wheels glide instead of jumping a section at a time.
  */
 export function startScrollTracking(): () => void {
-  // Full motion for everyone (the OS reduced-motion setting is deliberately ignored); ?motion=reduced opts out.
-  scroll.reducedMotion = new URLSearchParams(window.location.search).get('motion') === 'reduced'
+  document.documentElement.classList.toggle('capture', scroll.capture)
   // The reveal is a story: a reload starts at the beginning instead of gliding back to an old position.
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
   if (!window.location.hash) window.scrollTo(0, 0)
@@ -77,7 +81,7 @@ export function startScrollTracking(): () => void {
 
   let raf = 0
   let onNativeScroll: (() => void) | null = null
-  if (scroll.reducedMotion) {
+  if (scroll.reducedMotion || scroll.capture) {
     onNativeScroll = () => update(window.scrollY)
     window.addEventListener('scroll', onNativeScroll, { passive: true })
   } else {

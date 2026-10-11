@@ -613,3 +613,13 @@ h2 {
   min-height: auto;
   padding-bottom: 30vh;
 }
+
+/* Recording mode (?capture=1): copy is present without fades, and the sound button stays out of frame. */
+.capture [data-reveal] {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+.capture .sound {
+  display: none;
+}

@@ -1,11 +1,11 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { advance, Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 import { Scene } from './scene/Scene'
 import { Overlay } from './overlay/Overlay'
 import { SoundToggle } from './audio/SoundToggle'
 import { BEATS } from './beats'
-import { onBeatChange, scrollToTarget, startScrollTracking } from './scroll'
+import { onBeatChange, scroll, scrollToTarget, startScrollTracking } from './scroll'
 import { REPO, RULES } from './links'
 
 function webglAvailable() {
@@ -38,6 +38,19 @@ function BeatDots() {
   )
 }
 
+/** Recording hook (?capture=1): the recorder renders exactly one frame per call, at a time it chooses. */
+function useCaptureBridge(ready: boolean) {
+  useEffect(() => {
+    if (!scroll.capture) return
+    Object.assign(window, {
+      __capture: {
+        step: (seconds: number) => advance(seconds),
+        ready: () => ready,
+      },
+    })
+  }, [ready])
+}
+
 export function App() {
   useEffect(() => startScrollTracking(), [])
   const hasGL = useMemo(webglAvailable, [])
@@ -53,13 +66,15 @@ export function App() {
   const [dpr, setDpr] = useState(maxDpr)
   const [ready, setReady] = useState(false)
   const onReady = useCallback(() => setReady(true), [])
+  useCaptureBridge(ready)
 
   return (
     <>
       <div className={`stage${ready ? ' is-ready' : ''}`} aria-hidden="true">
         {hasGL ? (
           <Canvas
-            dpr={dpr}
+            dpr={scroll.capture ? 1 : dpr}
+            frameloop={scroll.capture ? 'never' : 'always'}
             gl={{ antialias: false, powerPreference: 'high-performance' }}
             camera={{ fov: 50, near: 0.1, far: 2000, position: [2.4, 1.85, 6.2] }}
           >

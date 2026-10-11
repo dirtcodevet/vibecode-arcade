@@ -1,22 +1,19 @@
 import { useEffect, useState, type RefObject } from 'react'
 
-const QUERY = '(prefers-reduced-motion: reduce)'
-
-/** True when the OS asks for less motion, or the reveal site forced it (html.reduced, set from ?motion=reduced). */
+/**
+ * True when the reveal holds still: ?motion=reduced (html.reduced) or a recording (html.capture).
+ * The OS reduced-motion setting is deliberately ignored, matching the rest of the site.
+ */
 function readReduced() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia(QUERY).matches || document.documentElement.classList.contains('reduced')
+  if (typeof document === 'undefined') return false
+  const html = document.documentElement.classList
+  return html.contains('reduced') || html.contains('capture')
 }
 
 export function useReducedMotion() {
+  // The site sets these classes once at startup, before the storefront mounts.
   const [reduced, setReduced] = useState(readReduced)
-  useEffect(() => {
-    const mq = window.matchMedia(QUERY)
-    const update = () => setReduced(readReduced())
-    mq.addEventListener('change', update)
-    update()
-    return () => mq.removeEventListener('change', update)
-  }, [])
+  useEffect(() => setReduced(readReduced()), [])
   return reduced
 }
 
