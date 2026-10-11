@@ -5,6 +5,19 @@ import { WEB_FOLDER } from '../framework/rules.ts';
 
 export const GAME_SCHEME = 'arcade-game';
 
+/**
+ * Privileges for arcade-game://. Standard + secure give each slug its own origin
+ * and a secure context; fetch + CORS let opaque-origin game frames load their
+ * own assets. Never bypassCSP, never service workers.
+ */
+export const GAME_SCHEME_PRIVILEGES = {
+  standard: true,
+  secure: true,
+  supportFetchAPI: true,
+  corsEnabled: true,
+  stream: true,
+} as const;
+
 const mounts = new Map<string, string>();
 
 export function mountWeb(slug: string, packageRoot: string): void {

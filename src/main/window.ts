@@ -1,5 +1,6 @@
-import { BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { preloadPath, rendererEntry } from './locations.ts';
+import { shellWebPreferences } from './security.ts';
 
 export const GROUND_COLOR = '#12110e';
 
@@ -13,16 +14,7 @@ export function createMainWindow({ smoke = false } = {}): BrowserWindow {
     backgroundColor: GROUND_COLOR,
     autoHideMenuBar: true,
     show: false,
-    webPreferences: {
-      preload: preloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      webSecurity: true,
-      spellcheck: false,
-      // Smoke runs capture the page while it may be unfocused.
-      backgroundThrottling: !smoke,
-    },
+    webPreferences: shellWebPreferences({ preload: preloadPath(), packaged: app.isPackaged, smoke }),
   });
   win.once('ready-to-show', () => win.show());
 

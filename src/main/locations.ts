@@ -7,7 +7,10 @@ export function appRoot(): string {
   return app.isPackaged ? process.resourcesPath : app.getAppPath();
 }
 
-/** Package folders may be absolute, or relative to the app root. */
+/**
+ * Main-process callers only (the smoke run). Paths from the shell page go
+ * through shellPackageDir in ipc-guards.ts, which allows only bundled packages.
+ */
 export function resolvePackageDir(dir: string): string {
   return resolve(appRoot(), dir);
 }

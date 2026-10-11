@@ -16,6 +16,19 @@ extraResources:
   - from: examples/broken-cartridge
     to: examples/broken-cartridge
 asar: true
+# Electron fuses, flipped by electron-builder (@electron/fuses) right before
+# signing: no ELECTRON_RUN_AS_NODE, NODE_OPTIONS, or --inspect in the shipped
+# app; app code only from a validated app.asar; encrypted cookie store.
+# grantFileProtocolExtraPrivileges stays at its default (on) because the shell
+# page loads from file:// and its module scripts need it; turning it off leaves
+# the window blank until the shell moves to a custom protocol.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
 win:
   target:
     - nsis

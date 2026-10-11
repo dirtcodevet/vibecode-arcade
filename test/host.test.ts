@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import type { LaunchResult } from '../src/shared/bridge.ts';
 import { mimeType } from '../src/main/mime.ts';
-import { spawnNative } from '../src/main/native.ts';
+import { childEnv, nativeFileProblem, spawnNative } from '../src/main/native.ts';
 import { launchPackage, loadPackageReport } from '../src/main/packages.ts';
 import { resolveWebAsset } from '../src/main/web-assets.ts';
 import { isMounted, mountedRoot, webUrl } from '../src/main/web-mounts.ts';
@@ -96,8 +96,30 @@ describe('resolveWebAsset (arcade-game:// files)', () => {
       '/C:%5cWindows%5cwin.ini',
       '/missing.js',
       '/%zz',
+      '/%252e%252e/arcade.json',
+      '/%2E%2E%2Farcade.json',
+      '/%00',
+      '/index.html%00.png',
+      '/index.html::$DATA',
+      '/index.html%3a%3a$DATA',
+      '/C:/Windows/win.ini',
+      '//127.0.0.1/c$/Windows/win.ini',
+      '/%5c%5c127.0.0.1%5cc$%5cWindows%5cwin.ini',
+      '/CON',
+      '/NUL',
+      '/CONIN$',
+      '/COM1',
+      '/index.html/',
+      `/${'a/'.repeat(2000)}index.html`,
     ]) {
       assert.equal(await resolveWebAsset(REFERENCE_DIR, pathname), null, pathname);
+    }
+  });
+
+  it('404s traversal however the URL parser hands it over', async () => {
+    for (const spelling of ['/%2e%2e/arcade.json', '/web/../../arcade.json', '/./../arcade.json']) {
+      const { pathname } = new URL(`arcade-game://reference-cartridge${spelling}`);
+      assert.equal(await resolveWebAsset(REFERENCE_DIR, pathname), null, spelling);
     }
   });
 
@@ -107,12 +129,95 @@ describe('resolveWebAsset (arcade-game:// files)', () => {
     await sandbox.linkDir('linked-web/web', join(sandbox.dir, 'elsewhere'));
     assert.equal(await resolveWebAsset(join(sandbox.dir, 'linked-web'), '/index.html'), null);
   });
+
+  it('404s a file reached through a link inside web/ that leaves the package', async () => {
+    await sandbox.write('secrets/token.txt', 'hunter2');
+    await sandbox.write('inner-link/web/index.html', '<p>game</p>');
+    await sandbox.linkDir('inner-link/web/assets', join(sandbox.dir, 'secrets'));
+    const root = join(sandbox.dir, 'inner-link');
+    assert.equal(await resolveWebAsset(root, '/assets/token.txt'), null);
+    assert.equal(await resolveWebAsset(root, '/index.html'), await realpath(join(root, 'web', 'index.html')));
+  });
 });
 
 describe('spawnNative', () => {
   it('refuses a build path that does not resolve inside the package', async () => {
     const result = await spawnNative(REFERENCE_DIR, '../broken-cartridge/web/index.html');
     assert.equal(result.kind, 'error');
+  });
+
+  it('refuses anything but an .exe on Windows, before spawning', async () => {
+    const dir = await writePackage(sandbox, 'script-build', {
+      web: 'web/index.html',
+      windows: 'windows/game.bat',
+    });
+    await sandbox.write('script-build/windows/game.cmd', '@echo off');
+    await sandbox.write('script-build/windows/game.png', 'MZ');
+    for (const build of ['windows/game.bat', 'windows/game.cmd', 'windows/game.png']) {
+      const result = await spawnNative(dir, build, 'win32');
+      assert.ok(result.kind === 'error', build);
+      assert.match(result.reason, /not an \.exe/);
+    }
+  });
+
+  it('returns an error instead of throwing when the OS refuses the file', async () => {
+    // On Windows, spawning a .bat without a shell throws EINVAL synchronously
+    // (CVE-2024-27980); elsewhere the file lacks an executable bit.
+    const dir = await writePackage(sandbox, 'refused-build', { windows: 'windows/game.bat' });
+    const result = await spawnNative(dir, 'windows/game.bat', 'linux');
+    assert.equal(result.kind, 'error');
+  });
+
+  it('nativeFileProblem allows .exe on Windows and any file elsewhere', () => {
+    assert.equal(nativeFileProblem('C:\\pkg\\windows\\Game.EXE', 'win32'), null);
+    assert.notEqual(nativeFileProblem('C:\\pkg\\windows\\game.exe.bat', 'win32'), null);
+    assert.notEqual(nativeFileProblem('C:\\pkg\\windows\\game', 'win32'), null);
+    assert.equal(nativeFileProblem('/pkg/linux/run.sh', 'linux'), null);
+    assert.equal(nativeFileProblem('/pkg/darwin/Game.app/Contents/MacOS/Game', 'darwin'), null);
+  });
+});
+
+describe('childEnv (native build environment)', () => {
+  it('drops the shell runtime switches and credential-named variables', () => {
+    const env = childEnv({
+      PATH: '/usr/bin',
+      SystemRoot: 'C:\\Windows',
+      HOME: '/home/player',
+      APPDATA: 'C:\\Users\\player\\AppData\\Roaming',
+      XAUTHORITY: '/run/user/1000/xauth',
+      DISPLAY: ':0',
+      LANG: 'en_US.UTF-8',
+      NUMBER_OF_PROCESSORS: '8',
+      TOKENIZERS_PARALLELISM: 'false',
+      KEYBOARD_LAYOUT: 'us',
+      NODE_OPTIONS: '--require ./evil.js',
+      NODE_EXTRA_CA_CERTS: '/tmp/ca.pem',
+      ELECTRON_RUN_AS_NODE: '1',
+      npm_config__authToken: 'npm_secret',
+      ARCADE_SMOKE: '1',
+      GITHUB_TOKEN: 'ghp_x',
+      OPENAI_API_KEY: 'sk-x',
+      ANTHROPIC_API_KEY: 'sk-ant-x',
+      AWS_SECRET_ACCESS_KEY: 'x',
+      AWS_SESSION_TOKEN: 'x',
+      AZURE_OPENAI_KEY: 'x',
+      DB_PASSWORD: 'x',
+      CLIENT_SECRET: 'x',
+      SSH_AUTH_SOCK: '/tmp/agent.sock',
+      EMPTY: undefined,
+    });
+    assert.deepEqual(Object.keys(env).sort(), [
+      'APPDATA',
+      'DISPLAY',
+      'HOME',
+      'KEYBOARD_LAYOUT',
+      'LANG',
+      'NUMBER_OF_PROCESSORS',
+      'PATH',
+      'SystemRoot',
+      'TOKENIZERS_PARALLELISM',
+      'XAUTHORITY',
+    ]);
   });
 });
 

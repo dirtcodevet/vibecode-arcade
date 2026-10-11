@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import type { Host } from '../framework/types.ts';
 import type { LaunchResult, PackageReport } from '../shared/bridge.ts';
 import { BROKEN_CARTRIDGE, EXAMPLE_PACKAGES, REFERENCE_CARTRIDGE, type ExamplePackage } from '../shared/examples.ts';
-import { appRoot, resolvePackageDir } from './locations.ts';
+import { appRoot, isRendererUrl, resolvePackageDir } from './locations.ts';
 import { launchPackage, loadPackageReport } from './packages.ts';
 import { isMounted } from './web-mounts.ts';
 
@@ -24,6 +24,10 @@ export async function runSmoke(win: BrowserWindow, host: Host): Promise<number> 
   const consoleErrors: string[] = [];
   win.webContents.on('console-message', ({ level, message }) => {
     if (level === 'error') consoleErrors.push(message);
+  });
+  const failedFrameLoads: { url: string; code: number }[] = [];
+  win.webContents.on('did-fail-load', (_event, code, _description, url, isMainFrame) => {
+    if (!isMainFrame) failedFrameLoads.push({ url, code });
   });
   const outDir = join(appRoot(), '.work', 'smoke');
   await mkdir(outDir, { recursive: true });
@@ -87,18 +91,79 @@ export async function runSmoke(win: BrowserWindow, host: Host): Promise<number> 
   checks.frameOriginIsOpaque = cartridgeSays.includes('origin: null');
   checks.cartridgeReactsToInput = cartridgeSays.includes('balls tossed: 3');
 
+  // Escape attempts from inside the game frame. Blocked attempts log console
+  // errors on purpose, so only errors from before this point fail the run.
+  const shellErrors = consoleErrors.length;
+  const escape = await withTimeout(gameFrame?.executeJavaScript(GAME_ESCAPE_PROBE), 8_000);
+  const permissions = await evaluate<Record<string, string>>(win, SHELL_PERMISSION_PROBE);
+  // The bridge itself refuses folders other than the bundled packages.
+  const foreignDirs = JSON.stringify(['C:\\Windows\\System32', '/etc', '..', 'examples', `${REFERENCE_CARTRIDGE.dir}/..`]);
+  checks.bridgeRefusesOtherFolders = await evaluate<boolean>(
+    win,
+    `Promise.all(${foreignDirs}.map((dir) => window.arcade.launchPackage(dir).then(() => false, () => true))).then((refused) => refused.every(Boolean))`,
+  );
+  // Last, because a blocked attempt leaves an error page in the frame. A data:
+  // URL needs no network, so only a block (not a DNS failure) makes it fail.
+  const leaveTo = 'data:text/plain,escaped';
+  await withTimeout(
+    gameFrame?.executeJavaScript(`setTimeout(() => { location.href = ${JSON.stringify(leaveTo)}; }); undefined`),
+    2_000,
+  );
+  await delay(800);
+  log({ step: 'escape', escape, permissions, failedFrameLoads, shellUrl: win.webContents.getURL() });
+  checks.gameCannotEscape =
+    isRecord(escape) && Object.values(escape).every((outcome) => outcome === 'blocked' || outcome === 404);
+  checks.gameFrameCannotLeaveGameUrls = failedFrameLoads.some((load) => load.url === leaveTo);
+  checks.shellStaysPut = isRendererUrl(win.webContents.getURL());
+  checks.permissionsDenied = Object.values(permissions).every((state) => state === 'denied');
+
   const reference = runs.get(REFERENCE_CARTRIDGE.dir);
   const broken = runs.get(BROKEN_CARTRIDGE.dir);
   checks.referenceAdmitted = reference?.report.admission.ok === true;
   checks.referenceLaunchedWeb = reference?.launch.kind === 'web';
   checks.brokenRejected = broken?.report.admission.ok === false;
   checks.brokenNotLaunched = broken?.launch.kind === 'rejected' && !isMounted('broken-cartridge');
-  checks.noConsoleErrors = consoleErrors.length === 0;
+  checks.noConsoleErrors = shellErrors === 0;
 
   const passed = Object.values(checks).every(Boolean);
-  log({ step: 'verdict', passed, checks, consoleErrors, screenshots: outDir });
+  log({ step: 'verdict', passed, checks, consoleErrors: consoleErrors.slice(0, shellErrors), screenshots: outDir });
   return passed ? 0 : 1;
 }
+
+/** Runs inside the game frame; every outcome should be "blocked" or a 404. */
+const GAME_ESCAPE_PROBE = `(async () => {
+  const outcome = {};
+  const attempt = (fn) => { try { return fn(); } catch { return 'blocked'; } };
+  outcome.bridge = typeof window.arcade === 'undefined' ? 'blocked' : 'exposed';
+  outcome.parentBridge = attempt(() => (typeof parent.arcade === 'undefined' ? 'blocked' : 'exposed'));
+  outcome.parentDom = attempt(() => (parent.document ? 'readable' : 'blocked'));
+  outcome.popup = attempt(() => (window.open('https://example.com/') === null ? 'blocked' : 'opened'));
+  outcome.storage = attempt(() => (localStorage.length >= 0 ? 'readable' : 'blocked'));
+  outcome.cookies = attempt(() => (typeof document.cookie === 'string' ? 'readable' : 'blocked'));
+  outcome.fileFetch = await fetch('file:///C:/Windows/win.ini').then(() => 'read', () => 'blocked');
+  outcome.manifestFetch = await fetch('arcade-game://reference-cartridge/%2e%2e/arcade.json').then((r) => r.status, () => 'blocked');
+  outcome.encodedFetch = await fetch('arcade-game://reference-cartridge/..%2farcade.json').then((r) => r.status, () => 'blocked');
+  outcome.unmountedFetch = await fetch('arcade-game://broken-cartridge/index.html').then((r) => r.status, () => 'blocked');
+  // A nested frame may only load game URLs. A data: page needs no network and
+  // reports back if it ever runs.
+  outcome.nestedFrame = await new Promise((resolve) => {
+    const frame = document.createElement('iframe');
+    const onMessage = (event) => { if (event.data === 'nested-escaped') finish('loaded'); };
+    const finish = (result) => { removeEventListener('message', onMessage); frame.remove(); resolve(result); };
+    addEventListener('message', onMessage);
+    frame.src = 'data:text/html,<script>parent.postMessage("nested-escaped", "*")</script>';
+    document.body.append(frame);
+    setTimeout(() => finish('blocked'), 1500);
+  });
+  return outcome;
+})()`;
+
+/** Runs in the shell page: permission checks should all come back denied. */
+const SHELL_PERMISSION_PROBE = `Promise.all(
+  ['geolocation', 'notifications', 'camera', 'microphone', 'midi', 'clipboard-read'].map((name) =>
+    navigator.permissions.query({ name }).then((status) => [name, status.state], () => [name, 'denied']),
+  ),
+).then(Object.fromEntries)`;
 
 function log(entry: object): void {
   console.log(`[smoke] ${JSON.stringify(entry, null, 2)}`);
@@ -148,4 +213,13 @@ async function capture(win: BrowserWindow, file: string): Promise<void> {
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Resolves to the promise's value, or undefined if it fails or takes longer than `ms`. */
+function withTimeout<T>(promise: Promise<T> | undefined, ms: number): Promise<T | undefined> {
+  return Promise.race([promise?.catch(() => undefined), delay(ms).then(() => undefined)]);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

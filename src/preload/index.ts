@@ -14,8 +14,14 @@ const bridge: ArcadeBridge = {
     arch: process.arch,
     osVersion: process.getSystemVersion(),
   }),
-  loadPackage: (dir) => ipcRenderer.invoke(IPC_CHANNELS.loadPackage, dir),
-  launchPackage: (dir) => ipcRenderer.invoke(IPC_CHANNELS.launchPackage, dir),
+  loadPackage: (dir) => invoke(IPC_CHANNELS.loadPackage, dir),
+  launchPackage: (dir) => invoke(IPC_CHANNELS.launchPackage, dir),
 };
+
+/** Forwards only a string argument; the main process re-checks everything anyway. */
+function invoke(channel: string, dir: unknown) {
+  if (typeof dir !== 'string') return Promise.reject(new TypeError('Package folder must be a string.'));
+  return ipcRenderer.invoke(channel, dir);
+}
 
 contextBridge.exposeInMainWorld('arcade', bridge);

@@ -4,13 +4,16 @@ import { hostFromNodePlatform } from '../framework/launch.ts';
 import { registerIpc, trustShellContents } from './ipc.ts';
 import { appRoot } from './locations.ts';
 import { handleGameProtocol, registerGameScheme } from './protocol.ts';
-import { hardenSession, lockNavigation } from './security.ts';
+import { hardenSession, lockWebContents } from './security.ts';
 import { runSmoke } from './smoke.ts';
 import { createMainWindow } from './window.ts';
 
-const smoke = process.env.ARCADE_SMOKE === '1';
+// The smoke run drives a development build only; a packaged app ignores the switch.
+const smoke = process.env.ARCADE_SMOKE === '1' && !app.isPackaged;
 const SMOKE_DEADLINE_MS = 90_000;
 
+// Every renderer is sandboxed, including any created later.
+app.enableSandbox();
 registerGameScheme();
 if (smoke) {
   app.setPath('userData', join(appRoot(), '.work', 'smoke-profile'));
@@ -20,7 +23,7 @@ if (smoke) {
   app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 }
 
-app.on('web-contents-created', (_event, contents) => lockNavigation(contents));
+app.on('web-contents-created', (_event, contents) => lockWebContents(contents));
 
 function openWindow(): BrowserWindow {
   const win = createMainWindow({ smoke });

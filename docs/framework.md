@@ -122,15 +122,20 @@ Two layers, both required:
 manifest path is never put into a shell string. Right before spawning, the
 host re-resolves the build's real path and refuses to start it unless it is
 inside the package root, which defeats symlink escapes planted after
-admission. On Windows the native build must be a real executable (`.exe`);
-`.bat`/`.cmd` need a shell and won't start. On Linux/macOS it needs its
-executable bit and, for scripts, a shebang.
+admission. On Windows the native build must be a real executable (`.exe`,
+checked on the real path); anything else, `.bat`/`.cmd` included, is refused
+before spawning. On Linux/macOS it needs its executable bit and, for scripts,
+a shebang. The child gets the user's environment minus the shell's own
+switches (`NODE_*`, `ELECTRON_*`, `npm_*`, `ARCADE_*`) and variables named like
+credentials (`*_TOKEN`, `*_API_KEY`, `*_SECRET*`, `SSH_AUTH_SOCK`, ...). A native
+build still runs with the user's full rights: admission checks the package's
+shape, not its behavior.
 
 ## Host duties
 
 | Layer | Owns | Never does |
 | --- | --- | --- |
-| **main** (`src/main`) | Disk access, admission at the trust boundary, process spawning, the `arcade-game://` protocol, window + session hardening (deny permissions except pointer lock/fullscreen, no popups, no navigation away), IPC sender checks | Trust anything the renderer or a manifest says without re-checking it |
+| **main** (`src/main`) | Disk access, admission at the trust boundary, process spawning, the `arcade-game://` protocol, window + session hardening (deny permission requests and checks except pointer lock/fullscreen; no popups, downloads, devices, webviews, or navigation away), IPC sender checks | Trust anything the renderer or a manifest says without re-checking it |
 | **preload** (`src/preload`) | Exposes exactly `getPlatform()`, `loadPackage(dir)`, `launchPackage(dir)` on `window.arcade` via `contextBridge` | Expose Node, `ipcRenderer`, or arbitrary channels |
 | **renderer** (`src/renderer`) | Screens, the rules list (imported from `rules.ts`), rendering admission results, the sandboxed game frame, the status line | Touch the disk, spawn processes, or decide admission |
 
@@ -138,8 +143,13 @@ The shell window runs with `contextIsolation: true`, `nodeIntegration: false`,
 `sandbox: true`, and a CSP of `default-src 'self'; script-src 'self'; frame-src
 arcade-game:; object-src 'none'; base-uri 'none'; form-action 'none'`. IPC
 handlers accept calls only from the top frame of the shell window loaded from
-the shell's own URL. Relative package folders resolve against the app root
-(the repo in development, the resources folder when packaged).
+the shell's own URL, and in v0.1 only for the packages bundled with the shell
+(`src/shared/examples.ts`), resolved against the app root (the repo in
+development, the resources folder when packaged). Any other folder is refused
+before the disk is touched. Packaged builds have no DevTools, ignore
+`ARCADE_SMOKE`, and ship with Electron fuses set in `electron-builder.yml`
+(no `ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS`, or `--inspect`; app code only from
+an integrity-checked `app.asar`).
 
 ### The bridge (`src/shared/bridge.ts`)
 
@@ -167,8 +177,13 @@ conformance fixtures, not listings.
 
 - `pnpm test` runs Node's built-in test runner over `test/*.test.ts`: rules,
   path jail, launch order, schema agreement, loader (including junction
-  escapes), and the host's package service and `arcade-game://` resolver.
+  escapes), the host's package service and `arcade-game://` resolver, native
+  spawn guards, and the security policies (permissions, navigation locks, window
+  preferences, IPC sender and package-folder checks) against fake Electron objects.
 - `pnpm smoke` builds, then starts the real app with `ARCADE_SMOKE=1`. It
   admits and launches both example packages, drives the UI (including launching
   the reference cartridge into the sandboxed frame and refusing the broken one),
+  tries to escape from inside the game frame (bridge, parent DOM, popups,
+  storage, `file://`, traversal, nested and self navigation), checks that the
+  bridge refuses other folders and that permission checks come back denied,
   saves screenshots to `.work/smoke/`, and exits non-zero on any failed check.

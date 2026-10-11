@@ -1,7 +1,8 @@
 import { ipcMain, type IpcMainInvokeEvent, type WebContents } from 'electron';
 import type { Host } from '../framework/types.ts';
 import { IPC_CHANNELS } from '../shared/bridge.ts';
-import { isRendererUrl, resolvePackageDir } from './locations.ts';
+import { isShellFrame, shellPackageDir } from './ipc-guards.ts';
+import { appRoot, isRendererUrl } from './locations.ts';
 import { launchPackage, loadPackageReport } from './packages.ts';
 
 const trusted = new Set<number>();
@@ -22,10 +23,8 @@ export function registerIpc(host: Host): void {
 }
 
 function packageDir(event: IpcMainInvokeEvent, dir: unknown): string {
-  const frame = event.senderFrame;
-  const fromShell =
-    trusted.has(event.sender.id) && frame !== null && frame.parent === null && isRendererUrl(frame.url);
-  if (!fromShell) throw new Error('Refused: request did not come from the shell page.');
-  if (typeof dir !== 'string' || dir.trim() === '') throw new Error('Package folder must be a non-empty string.');
-  return resolvePackageDir(dir);
+  if (!trusted.has(event.sender.id) || !isShellFrame(event.senderFrame, isRendererUrl)) {
+    throw new Error('Refused: request did not come from the shell page.');
+  }
+  return shellPackageDir(dir, appRoot());
 }

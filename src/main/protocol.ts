@@ -7,7 +7,7 @@ import { stat } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { mimeType } from './mime.ts';
 import { resolveWebAsset } from './web-assets.ts';
-import { GAME_SCHEME, mountedRoot } from './web-mounts.ts';
+import { GAME_SCHEME, GAME_SCHEME_PRIVILEGES, mountedRoot } from './web-mounts.ts';
 
 const GAME_HEADERS = {
   'cache-control': 'no-store',
@@ -23,7 +23,7 @@ export function registerGameScheme(): void {
   protocol.registerSchemesAsPrivileged([
     {
       scheme: GAME_SCHEME,
-      privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true },
+      privileges: GAME_SCHEME_PRIVILEGES,
     },
   ]);
 }
