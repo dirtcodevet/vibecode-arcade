@@ -5,6 +5,8 @@ import { span } from '../beats'
 import { FRAME_H, FRAME_W, forkState, frameState, HERO, newFrameState } from './frameLayout'
 
 const THREADS = 22
+const from = new Vector3()
+const to = new Vector3()
 
 /**
  * Golden filaments drawn from the parent window to its fork: a remix stays tied to what it came from.
@@ -71,14 +73,14 @@ export function RemixThreads({ portrait, params }: { portrait: boolean; params: 
 
     // Anchor at the hero's facing edge and stretch to the fork's.
     if (portrait) {
-      const top = fork.position.clone().add(new Vector3(0, FRAME_H / 2, 0))
-      const bottom = hero.position.clone().add(new Vector3(0, -FRAME_H / 2, 0))
-      g.position.copy(bottom)
+      to.copy(fork.position).y += FRAME_H / 2
+      from.copy(hero.position).y -= FRAME_H / 2
+      g.position.copy(from)
       g.rotation.set(0, 0, -Math.PI / 2)
-      g.scale.set(Math.max(0.001, bottom.y - top.y), FRAME_W / FRAME_H / 1.6, 1)
+      g.scale.set(Math.max(0.001, from.y - to.y), FRAME_W / FRAME_H / 1.6, 1)
     } else {
-      const from = hero.position.clone().add(new Vector3(FRAME_W / 2, 0, 0))
-      const to = fork.position.clone().add(new Vector3(-FRAME_W / 2, 0, 0))
+      from.copy(hero.position).x += FRAME_W / 2
+      to.copy(fork.position).x -= FRAME_W / 2
       g.position.copy(from)
       g.rotation.set(0, 0, 0)
       g.scale.set(Math.max(0.001, to.x - from.x), 1, 1)

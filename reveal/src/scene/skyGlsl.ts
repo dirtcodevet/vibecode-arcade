@@ -1,13 +1,16 @@
 import { Vector3 } from 'three'
 
 /** Sun just below the far ridge, a little right of the valley. */
-export const SUN_DIR = new Vector3(0.28, 0.035, -1).normalize()
+export const SUN_DIR = new Vector3(0.5, 0.03, -1).normalize()
 
 /** Shared GLSL: dusk gradient, sunset glow, a band of clouds, and stars. Used by the sky dome and the lake. */
 export const SKY_GLSL = /* glsl */ `
 uniform vec3 uSunDir;
 uniform float uTime;
 uniform float uNight;
+uniform vec3 uTop;
+uniform vec3 uBottom;
+uniform float uTopMix;
 
 float hash12(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -42,6 +45,10 @@ vec3 skyColor(vec3 d, bool withStars) {
   vec3 c = mix(hz, lower, smoothstep(0.0, 0.07, h));
   c = mix(c, upper, smoothstep(0.05, 0.32, h));
   c = mix(c, zenith, smoothstep(0.28, 0.85, h));
+  // Above a painted backdrop, continue the painting's own sky color.
+  c = mix(c, mix(uTop, zenith, smoothstep(0.45, 1.0, h) * 0.6), uTopMix * smoothstep(0.12, 0.42, h));
+  // Below the horizon: the valley in shadow (the painting's own lower edge when there is one).
+  c = mix(c, mix(vec3(0.05, 0.045, 0.1), uBottom, uTopMix), smoothstep(0.0, -0.06, h));
 
   // Sun glow behind the ridge.
   c += vec3(1.0, 0.50, 0.24) * pow(sunAmt, 10.0) * 0.55 * (1.0 - smoothstep(0.0, 0.3, h));

@@ -47,8 +47,23 @@ a {
   z-index: 0;
 }
 
+/* The painted valley shows at once; the live scene fades in over it when it has drawn. */
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/slots/scene/backdrop.jpg') center 58% / cover;
+  filter: brightness(0.62) saturate(0.95);
+}
+
 .stage canvas {
   display: block;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+
+.stage.is-ready canvas {
+  opacity: 1;
 }
 
 .stage-fallback {

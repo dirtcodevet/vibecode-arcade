@@ -1,10 +1,11 @@
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { PerformanceMonitor } from '@react-three/drei'
 import { Scene } from './scene/Scene'
 import { Overlay } from './overlay/Overlay'
 import { SoundToggle } from './audio/SoundToggle'
 import { BEATS } from './beats'
-import { onBeatChange, startScrollTracking } from './scroll'
+import { onBeatChange, scrollToTarget, startScrollTracking } from './scroll'
 import { REPO, RULES } from './links'
 
 function webglAvailable() {
@@ -22,10 +23,16 @@ function BeatDots() {
   return (
     <nav className="dots" aria-label="Sections">
       {BEATS.map((id, i) => (
-        <a key={id} href={`#${id}`} className={i === beat ? 'is-on' : ''} aria-label={id} onClick={(e) => {
-          e.preventDefault()
-          document.querySelector(`[data-beat="${id}"]`)?.scrollIntoView({ behavior: 'smooth' })
-        }} />
+        <a
+          key={id}
+          href={`#${id}`}
+          className={i === beat ? 'is-on' : ''}
+          aria-label={id}
+          onClick={(e) => {
+            e.preventDefault()
+            scrollToTarget(`[data-beat="${id}"]`)
+          }}
+        />
       ))}
     </nav>
   )
@@ -38,19 +45,29 @@ export function App() {
     () => window.matchMedia('(pointer: coarse)').matches || (navigator.hardwareConcurrency ?? 8) <= 4,
     [],
   )
+  // Cap the drawing buffer at ~3.2M pixels so big monitors stay smooth, then let the monitor step down if needed.
+  const maxDpr = useMemo(
+    () => Math.max(1, Math.min(lowPower ? 1.25 : 1.5, Math.sqrt(3_200_000 / (window.innerWidth * window.innerHeight)))),
+    [lowPower],
+  )
+  const [dpr, setDpr] = useState(maxDpr)
+  const [ready, setReady] = useState(false)
+  const onReady = useCallback(() => setReady(true), [])
 
   return (
     <>
-      <div className="stage" aria-hidden="true">
+      <div className={`stage${ready ? ' is-ready' : ''}`} aria-hidden="true">
         {hasGL ? (
           <Canvas
-            dpr={[1, lowPower ? 1.25 : 1.5]}
+            dpr={dpr}
             gl={{ antialias: false, powerPreference: 'high-performance' }}
             camera={{ fov: 50, near: 0.1, far: 2000, position: [2.4, 1.85, 6.2] }}
           >
-            <Suspense fallback={null}>
-              <Scene lowPower={lowPower} />
-            </Suspense>
+            <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(maxDpr)} flipflops={3} onFallback={() => setDpr(1)}>
+              <Suspense fallback={null}>
+                <Scene lowPower={lowPower} onReady={onReady} />
+              </Suspense>
+            </PerformanceMonitor>
           </Canvas>
         ) : (
           <div className="stage-fallback" />
@@ -65,6 +82,7 @@ export function App() {
           <span>VibeCode Arcade</span>
         </a>
         <nav className="bar-links">
+          <a href="#arcade">The Arcade</a>
           <a href="#how">How it works</a>
           <a href={RULES}>Rules</a>
           <a href={REPO}>GitHub</a>

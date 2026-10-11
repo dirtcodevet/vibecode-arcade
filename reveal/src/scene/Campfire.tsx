@@ -55,13 +55,13 @@ export function Campfire({ position }: { position: [number, number, number] }) {
     flame.uniforms.uTime.value += delta
     const t = state.clock.elapsedTime
     if (light.current) {
-      light.current.intensity = 6 * (0.82 + 0.1 * Math.sin(t * 11.3) + 0.08 * Math.sin(t * 17.9 + 1.3))
+      light.current.intensity = 4.2 * (0.82 + 0.1 * Math.sin(t * 11.3) + 0.08 * Math.sin(t * 17.9 + 1.3))
     }
   })
 
   return (
     <group position={position}>
-      <pointLight ref={light} color="#ff8a3c" intensity={6} distance={9} decay={1.8} position={[0, 0.45, 0]} />
+      <pointLight ref={light} color="#ff8a3c" intensity={4.2} distance={7} decay={2} position={[0, 0.45, 0]} />
       {stones.map((p, i) => (
         <mesh key={i} geometry={stoneGeometry} material={stoneMaterial} position={p} rotation={[i, i * 2, 0]} />
       ))}

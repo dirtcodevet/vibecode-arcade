@@ -2,13 +2,14 @@ import { useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { ShaderMaterial } from 'three'
 import { SKY_GLSL, SUN_DIR } from './skyGlsl'
+import { skyShared } from './skyShared'
 
 /** Still water in the valley floor, reflecting the dusk sky with a slow ripple. */
 export function Lake() {
   const material = useMemo(
     () =>
       new ShaderMaterial({
-        uniforms: { uSunDir: { value: SUN_DIR }, uTime: { value: 0 }, uNight: { value: 0 } },
+        uniforms: { uSunDir: { value: SUN_DIR }, uTime: { value: 0 }, uNight: { value: 0 }, ...skyShared },
         vertexShader: /* glsl */ `
           varying vec3 vWorld;
           void main() {

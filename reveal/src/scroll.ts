@@ -1,3 +1,5 @@
+import Lenis from 'lenis'
+import 'lenis/dist/lenis.css'
 import { BEATS } from './beats'
 
 /**
@@ -7,55 +9,58 @@ import { BEATS } from './beats'
  */
 export const scroll = {
   beat: 0,
-  velocity: 0,
   reducedMotion: false,
 }
 
 type Listener = (beat: number) => void
 const listeners = new Set<Listener>()
 let lastWhole = -1
+let lenis: Lenis | null = null
 
 export function onBeatChange(fn: Listener): () => void {
   listeners.add(fn)
   return () => listeners.delete(fn)
 }
 
-/** Maps window scroll onto beat position using the tops of the [data-beat] sections. */
-export function startScrollTracking(): () => void {
-  let lastY = window.scrollY
-  let lastT = performance.now()
+/** Smooth-scrolls to a section (or any selector), falling back to native scrolling. */
+export function scrollToTarget(selector: string) {
+  const el = document.querySelector<HTMLElement>(selector)
+  if (!el) return
+  if (lenis) lenis.scrollTo(el, { duration: 1.6 })
+  else el.scrollIntoView()
+}
 
-  // ?motion=full or ?motion=reduced overrides the OS preference (handy for testing, and an opt-in either way).
-  const forced = new URLSearchParams(window.location.search).get('motion')
-  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-  const applyMotion = (reduced: boolean) => {
-    scroll.reducedMotion = forced === 'full' ? false : forced === 'reduced' ? true : reduced
-    document.documentElement.classList.toggle('reduced', scroll.reducedMotion)
-  }
-  applyMotion(motionQuery.matches)
-  const onMotion = (e: MediaQueryListEvent) => applyMotion(e.matches)
-  motionQuery.addEventListener('change', onMotion)
+/**
+ * Maps page scroll onto beat position using the tops of the [data-beat] sections.
+ * Wheel input is smoothed by Lenis, so notched mouse wheels glide instead of jumping a section at a time.
+ */
+export function startScrollTracking(): () => void {
+  // Full motion for everyone (the OS reduced-motion setting is deliberately ignored); ?motion=reduced opts out.
+  scroll.reducedMotion = new URLSearchParams(window.location.search).get('motion') === 'reduced'
+  // The reveal is a story: a reload starts at the beginning instead of gliding back to an old position.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+  if (!window.location.hash) window.scrollTo(0, 0)
+  document.documentElement.classList.toggle('reduced', scroll.reducedMotion)
   if (import.meta.env.DEV) Object.assign(window, { __scroll: scroll })
 
-  const update = () => {
+  // Section geometry is measured on resize, not on every scroll event.
+  let tops: number[] = []
+  let ends: number[] = []
+  const measure = () => {
     const sections = Array.from(document.querySelectorAll<HTMLElement>('[data-beat]'))
-    if (sections.length === 0) return
+    tops = sections.map((s) => s.getBoundingClientRect().top + window.scrollY)
+    ends = sections.map((s, i) => tops[i + 1] ?? tops[i] + s.offsetHeight)
+  }
+
+  const update = (y: number) => {
+    if (tops.length === 0) return
     // A beat is "arrived" when its section's top reaches 35% down the viewport.
-    const probe = window.scrollY + window.innerHeight * 0.35
-    const tops = sections.map((s) => s.offsetTop)
+    const probe = y + window.innerHeight * 0.35
     let beat = 0
     for (let i = 0; i < tops.length; i++) {
-      const next = tops[i + 1] ?? tops[i] + sections[i].offsetHeight
-      if (probe >= tops[i]) beat = i + Math.min(1, (probe - tops[i]) / (next - tops[i]))
+      if (probe >= tops[i]) beat = i + Math.min(1, (probe - tops[i]) / (ends[i] - tops[i]))
     }
     scroll.beat = Math.min(beat, BEATS.length - 1)
-
-    const now = performance.now()
-    const dt = Math.max(16, now - lastT)
-    scroll.velocity = (window.scrollY - lastY) / dt
-    lastY = window.scrollY
-    lastT = now
-
     const whole = Math.round(scroll.beat)
     if (whole !== lastWhole) {
       lastWhole = whole
@@ -63,12 +68,36 @@ export function startScrollTracking(): () => void {
     }
   }
 
-  update()
-  window.addEventListener('scroll', update, { passive: true })
-  window.addEventListener('resize', update)
+  measure()
+  const resize = new ResizeObserver(() => {
+    measure()
+    update(lenis ? lenis.scroll : window.scrollY)
+  })
+  resize.observe(document.body)
+
+  let raf = 0
+  let onNativeScroll: (() => void) | null = null
+  if (scroll.reducedMotion) {
+    onNativeScroll = () => update(window.scrollY)
+    window.addEventListener('scroll', onNativeScroll, { passive: true })
+  } else {
+    // Motion is on by our own decision, so Lenis shouldn't switch smoothing off for the OS setting.
+    lenis = new Lenis({ lerp: 0.075, wheelMultiplier: 0.85, smoothWheel: true, anchors: { duration: 1.6 }, respectReducedMotion: false })
+    lenis.on('scroll', (l: Lenis) => update(l.scroll))
+    if (import.meta.env.DEV) Object.assign(window, { __lenis: lenis })
+    const tick = (t: number) => {
+      lenis?.raf(t)
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+  }
+  update(window.scrollY)
+
   return () => {
-    window.removeEventListener('scroll', update)
-    window.removeEventListener('resize', update)
-    motionQuery.removeEventListener('change', onMotion)
+    resize.disconnect()
+    cancelAnimationFrame(raf)
+    if (onNativeScroll) window.removeEventListener('scroll', onNativeScroll)
+    lenis?.destroy()
+    lenis = null
   }
 }

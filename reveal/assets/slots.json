@@ -11,5 +11,12 @@
     "slots/worlds/08.jpg",
     "slots/worlds/09.jpg"
   ],
-  "music": "slots/music.mp3"
+  "music": "slots/music.mp3",
+  "scene": {
+    "backdrop": "slots/scene/backdrop.jpg",
+    "$horizon": "Fraction of the backdrop's height, from the bottom, where the horizon sits. Set it per painting.",
+    "horizon": 0.47,
+    "dreamer": "slots/scene/dreamer.png",
+    "ground": "slots/scene/ground.jpg"
+  }
 }

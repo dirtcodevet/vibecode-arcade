@@ -3,8 +3,10 @@ import { useFrame, useThree } from '@react-three/fiber'
 import {
   AdditiveBlending,
   CanvasTexture,
+  ExtrudeGeometry,
   Group,
   MeshBasicMaterial,
+  MeshStandardMaterial,
   Shape,
   ShapeGeometry,
   ShaderMaterial,
@@ -33,10 +35,28 @@ function roundedRect(w: number, h: number, r: number) {
   return s
 }
 
-function ring(w: number, h: number, thickness: number, r: number) {
+function ringShape(w: number, h: number, thickness: number, r: number) {
   const outer = roundedRect(w + thickness * 2, h + thickness * 2, r + thickness)
   outer.holes.push(roundedRect(w, h, r))
-  return new ShapeGeometry(outer, 6)
+  return outer
+}
+
+function ring(w: number, h: number, thickness: number, r: number) {
+  return new ShapeGeometry(ringShape(w, h, thickness, r), 6)
+}
+
+/** A beveled brass frame with real depth, so it catches the warm reflections. */
+function frameGeometry(w: number, h: number) {
+  const g = new ExtrudeGeometry(ringShape(w, h, 0.13, 0.12), {
+    depth: 0.08,
+    bevelEnabled: true,
+    bevelThickness: 0.035,
+    bevelSize: 0.035,
+    bevelSegments: 3,
+    curveSegments: 8,
+  })
+  g.translate(0, 0, -0.06)
+  return g
 }
 
 /** "SLOT 007 / OPEN" lettering for an empty window, drawn once fonts are ready. */
@@ -82,10 +102,20 @@ function useSlotLabel(index: number, text: string): Texture {
 
 const pictureVertex = /* glsl */ `
   varying vec2 vUv;
-  void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`
+  varying vec3 vView;
+  varying vec3 vNormal;
+  void main() {
+    vUv = uv;
+    vec4 w = modelMatrix * vec4(position, 1.0);
+    vView = normalize(cameraPosition - w.xyz);
+    vNormal = normalize(mat3(modelMatrix) * normal);
+    gl_Position = projectionMatrix * viewMatrix * w;
+  }`
 
 const pictureFragment = /* glsl */ `
   varying vec2 vUv;
+  varying vec3 vView;
+  varying vec3 vNormal;
   uniform sampler2D uMap, uLabel;
   uniform float uHasMap, uEmpty, uOpacity, uTime, uSeed, uLit, uDim;
   ${NOISE_GLSL}
@@ -111,6 +141,10 @@ const pictureFragment = /* glsl */ `
     glass += vec3(0.9, 0.48, 0.22) * edge * 0.12;
 
     vec3 col = mix(world, glass, uEmpty) * (1.0 - uDim * 0.75);
+    // Glass: a soft diagonal sheen that slides as the camera moves, stronger at grazing angles.
+    float facing = clamp(dot(normalize(vNormal), normalize(vView)), 0.0, 1.0);
+    float band = smoothstep(0.42, 0.5, fract(uv.x * 0.6 + uv.y * 0.35 + vView.x * 0.35)) * (1.0 - smoothstep(0.5, 0.62, fract(uv.x * 0.6 + uv.y * 0.35 + vView.x * 0.35)));
+    col += vec3(1.0, 0.86, 0.7) * (band * 0.05 + pow(1.0 - facing, 3.0) * 0.12) * (1.0 - uDim);
     gl_FragColor = vec4(col, uOpacity);
     #include <colorspace_fragment>
   }`
@@ -123,10 +157,20 @@ function Window({ index, map, label, stateFor }: WindowProps) {
   const labelTexture = useSlotLabel(index, label)
   const state = useMemo(newFrameState, [])
 
-  const border = useMemo(() => ring(FRAME_W, FRAME_H, 0.09, 0.12), [])
+  const border = useMemo(() => frameGeometry(FRAME_W, FRAME_H), [])
   const innerLine = useMemo(() => ring(FRAME_W - 0.04, FRAME_H - 0.04, 0.018, 0.1), [])
 
-  const borderMaterial = useMemo(() => new MeshBasicMaterial({ color: '#8f6236', transparent: true }), [])
+  const borderMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: '#b8834a',
+        metalness: 0.85,
+        roughness: 0.32,
+        emissive: '#2a1206',
+        transparent: true,
+      }),
+    [],
+  )
   const lineMaterial = useMemo(
     () => new MeshBasicMaterial({ color: '#ffb066', transparent: true, toneMapped: false, blending: AdditiveBlending, depthWrite: false }),
     [],
@@ -210,7 +254,7 @@ function Window({ index, map, label, stateFor }: WindowProps) {
       <mesh material={picture}>
         <planeGeometry args={[FRAME_W, FRAME_H]} />
       </mesh>
-      <mesh geometry={border} material={borderMaterial} position={[0, 0, 0.005]} />
+      <mesh geometry={border} material={borderMaterial} />
       <mesh geometry={innerLine} material={lineMaterial} position={[0, 0, 0.01]} />
     </group>
   )

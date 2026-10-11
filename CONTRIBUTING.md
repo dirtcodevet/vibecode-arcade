@@ -67,6 +67,6 @@ Clone this repo and run the shell (`pnpm install`, then `pnpm dev`). The **Rules
 ## Work on the Arcade itself
 
 - **Desktop shell** (repo root): electron-vite + React + TypeScript. `pnpm install`, `pnpm dev`, `pnpm test`, `pnpm smoke`. The rules live in `src/framework`, which has no Electron imports. See [docs/framework.md](docs/framework.md) and [docs/platforms.md](docs/platforms.md).
-- **The reveal** (`reveal/`): the three.js site. `pnpm --dir reveal install`, then `pnpm --dir reveal dev`. Art and music are replaceable slots listed in `reveal/assets/slots.json`. Regenerate them with `reveal/tools/gen_art.py` (Grok Imagine, needs `XAI_API_KEY`) and `reveal/tools/gen_music.py` (Lyria, needs `GEMINI_API_KEY`). Every slot has a procedural fallback.
+- **The reveal** (`reveal/`): the three.js site. `pnpm --dir reveal install`, then `pnpm --dir reveal dev`. Art and music are replaceable slots listed in `reveal/assets/slots.json`. Regenerate them with `reveal/tools/gen_scene.py` and `reveal/tools/gen_art.py` (Grok Imagine, needs `XAI_API_KEY`) and `reveal/tools/gen_music.py` (Lyria, needs `GEMINI_API_KEY`). Every slot has a procedural fallback.
 
 Small, focused pull requests are easiest to review. Keep it free, keep it open, keep it vibecoded.

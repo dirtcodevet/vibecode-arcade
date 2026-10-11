@@ -6,7 +6,7 @@ A home for games made by vibecoding, gathered from the whole community and broug
 
 **The shelf is empty on purpose. [Bring your games.](CONTRIBUTING.md)**
 
-[See the reveal](https://dirtcodevet.github.io/vibecode-arcade/) · [Submit a game](https://github.com/dirtcodevet/vibecode-arcade/issues/new?template=submit-a-game.yml) · [Discussions](https://github.com/dirtcodevet/vibecode-arcade/discussions) · [The rules](docs/rules.md)
+[arcade.sockwaffle.com](https://arcade.sockwaffle.com/) · [Submit a game](https://github.com/dirtcodevet/vibecode-arcade/issues/new?template=submit-a-game.yml) · [Discussions](https://github.com/dirtcodevet/vibecode-arcade/discussions) · [The rules](docs/rules.md)
 
 ![VibeCode Arcade](reveal/public/og.jpg)
 
@@ -30,13 +30,14 @@ The rules live in `src/framework/` with no Electron imports. v0.1 hosts them in 
 
 ### The reveal
 
-Built with React Three Fiber, drei, and postprocessing. The scene is procedural first: the sky, mountains, lake, fire, and windows are code, and the generated art drops into slots named in `reveal/assets/slots.json`. If a file is missing, the procedural version stays.
+Built with React Three Fiber, drei, and postprocessing, with Lenis smoothing the scroll. The scene is procedural first: sky, mountains, lake, fire, embers, grass, and windows are all code. Painted layers (the valley backdrop, the dreamer, the ledge rock, the window art) drop into slots named in `reveal/assets/slots.json` and replace their procedural stand-ins. If a file is missing, the procedural version stays.
 
+- Painted scene layers: **Grok Imagine** (`reveal/tools/gen_scene.py`)
 - Windows onto game worlds and the key art: **Grok Imagine** (`reveal/tools/gen_art.py`)
 - Score: **Google Lyria** (`reveal/tools/gen_music.py`), crossfaded into a loop, with procedural Web Audio wind, fire, and chimes on top
-- Reduced motion holds one still frame and stacks the copy. Add `?motion=full` to the URL to override either way.
+- Motion is always on. Add `?motion=reduced` to the URL to hold one still frame with the copy stacked beneath it.
 
-It deploys to GitHub Pages from `.github/workflows/pages.yml` on every push to `main` that touches `reveal/`.
+The site lives at [arcade.sockwaffle.com](https://arcade.sockwaffle.com/). Build it with `pnpm --dir reveal build`; the output in `reveal/dist` is a plain static site that any host can serve.
 
 ## What's not here
 

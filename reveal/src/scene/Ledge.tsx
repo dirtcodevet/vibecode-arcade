@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { DodecahedronGeometry, MeshStandardMaterial, PlaneGeometry } from 'three'
+import { useEffect, useMemo } from 'react'
+import { DodecahedronGeometry, MeshStandardMaterial, MirroredRepeatWrapping, PlaneGeometry, Texture } from 'three'
 
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
@@ -14,37 +14,46 @@ function bumps(x: number, z: number) {
   )
 }
 
+/** Where the ledge drops away, as a function of x. */
+export const ledgeEdge = (x: number) => -1.2 + Math.sin(x * 0.45) * 0.6 + Math.sin(x * 1.7) * 0.2
+
+/** Height of the outcrop at world (x, z). Shared with the grass so it sits on the rock. */
+export function groundHeight(x: number, z: number) {
+  const edge = ledgeEdge(x)
+  const drop = smooth(edge, edge - 2.5, z) * 40
+  const rise = smooth(4, 14, Math.abs(x)) * 2.2
+  return bumps(x, z) + rise - drop
+}
+
+const PLANE_Z = 9.5
+
 /** The rock outcrop the dreamer sits on. Its far edge drops away into the valley. */
-export function Ledge() {
+export function Ledge({ texture }: { texture: Texture | null }) {
   const ground = useMemo(() => {
-    const g = new PlaneGeometry(60, 26, 120, 60)
+    const g = new PlaneGeometry(60, 26, 160, 80)
     g.rotateX(-Math.PI / 2)
     const p = g.attributes.position
-    for (let i = 0; i < p.count; i++) {
-      const x = p.getX(i)
-      const z = p.getZ(i) + 9.5 // world z: the plane spans -3.5 .. 22.5
-      const edge = -1.2 + Math.sin(x * 0.45) * 0.6 + Math.sin(x * 1.7) * 0.2
-      const drop = smooth(edge, edge - 2.5, z) * 40
-      const rise = smooth(4, 14, Math.abs(x)) * 2.2
-      p.setY(i, bumps(x, z) + rise - drop)
-    }
+    for (let i = 0; i < p.count; i++) p.setY(i, groundHeight(p.getX(i), p.getZ(i) + PLANE_Z))
     g.computeVertexNormals()
     return g
   }, [])
 
   const rocks = useMemo(() => {
-    const out: { pos: [number, number, number]; scale: [number, number, number]; rot: number }[] = []
+    // Small stones only: big low-poly boulders fight the painted backdrop.
     const seeds = [
-      [-2.4, -0.4, 0.42, 0.32],
-      [-3.6, 0.5, 0.7, 0.5],
-      [3.2, -0.6, 0.5, 0.36],
-      [4.6, 0.9, 0.9, 0.55],
-      [-1.3, -1.0, 0.28, 0.2],
-      [-6.0, 2.0, 1.2, 0.8],
-      [6.8, 2.6, 1.4, 0.9],
+      [-2.4, -0.4, 0.26, 0.18],
+      [-3.4, 0.6, 0.34, 0.22],
+      [2.9, -0.5, 0.3, 0.2],
+      [-1.3, -1.0, 0.2, 0.14],
+      [1.9, -1.1, 0.16, 0.11],
+      [-0.6, 0.9, 0.14, 0.1],
+      [4.1, 0.4, 0.22, 0.15],
     ]
-    for (const [x, z, s, h] of seeds) out.push({ pos: [x, h * 0.25, z], scale: [s, h, s * 0.8], rot: x * 1.7 })
-    return out
+    return seeds.map(([x, z, s, h]) => ({
+      pos: [x, groundHeight(x, z) + h * 0.2, z] as [number, number, number],
+      scale: [s, h, s * 0.8] as [number, number, number],
+      rot: x * 1.7,
+    }))
   }, [])
 
   const rockGeometry = useMemo(() => {
@@ -61,9 +70,28 @@ export function Ledge() {
   const groundMaterial = useMemo(() => new MeshStandardMaterial({ color: '#100e14', roughness: 0.95, metalness: 0 }), [])
   const rockMaterial = useMemo(() => new MeshStandardMaterial({ color: '#121017', roughness: 0.9, metalness: 0, flatShading: true }), [])
 
+  // With painted rock available, the ground and stones take its detail; the firelight does the rest.
+  useEffect(() => {
+    if (!texture) return
+    const groundMap = texture.clone()
+    groundMap.wrapS = groundMap.wrapT = MirroredRepeatWrapping
+    groundMap.repeat.set(14, 6)
+    groundMap.needsUpdate = true
+    groundMaterial.map = groundMap
+    groundMaterial.color.set('#4a4652')
+    groundMaterial.needsUpdate = true
+    const rockMap = texture.clone()
+    rockMap.wrapS = rockMap.wrapT = MirroredRepeatWrapping
+    rockMap.repeat.set(1.5, 1.5)
+    rockMap.needsUpdate = true
+    rockMaterial.map = rockMap
+    rockMaterial.color.set('#6a6168')
+    rockMaterial.needsUpdate = true
+  }, [texture, groundMaterial, rockMaterial])
+
   return (
     <group>
-      <mesh geometry={ground} material={groundMaterial} position={[0, 0, 9.5]} />
+      <mesh geometry={ground} material={groundMaterial} position={[0, 0, PLANE_Z]} />
       {rocks.map((r, i) => (
         <mesh key={i} geometry={rockGeometry} material={rockMaterial} position={r.pos} scale={r.scale} rotation={[r.rot, r.rot * 0.6, 0]} />
       ))}

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { CONTRIBUTING, DISCUSS, REPO, RULES, SUBMIT } from '../links'
+import { MarketSection } from '../market/MarketSection'
 
 const MANIFEST = `{
   "slug": "your-game",
@@ -119,6 +120,8 @@ export function Overlay() {
           </div>
         </div>
       </section>
+
+      <MarketSection />
 
       <section className="howto" id="how">
         <div className="howto-inner">
