@@ -1,0 +1,15 @@
+{
+  "slug": "broken-cartridge",
+  "title": "Broken Cartridge",
+  "maker": "VibeCode Arcade",
+  "tagline": "Fails admission on purpose, so the shell can prove it refuses to launch it.",
+  "license": "Proprietary",
+  "prompt": "Vibecoded as a negative fixture: an AI coding agent was asked for a package that breaks three rules at once, with a non-free license, a build path that climbs out of the package, and a price field the manifest does not allow.",
+  "sourceUrl": "https://github.com/dirtcodevet/vibecode-arcade",
+  "builds": {
+    "web": "web/index.html",
+    "windows": "../escape/game.exe"
+  },
+  "remixOf": null,
+  "price": 4.99
+}

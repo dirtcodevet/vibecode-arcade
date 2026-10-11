@@ -1,0 +1,14 @@
+{
+  "slug": "reference-cartridge",
+  "title": "Reference Cartridge",
+  "maker": "VibeCode Arcade",
+  "tagline": "Toss a bouncing ball. Proves a package can be admitted and launched.",
+  "license": "MIT",
+  "prompt": "Vibecoded as the shell's conformance fixture. Asked an AI coding agent for the smallest package that passes every admission rule: a single self-contained web page that says the VibeCode Arcade shell launched it and lets you click or tap to toss bouncing balls on a canvas, plus a tiny POSIX script that reports a native launch on Linux. No network requests, no dependencies, MIT licensed.",
+  "sourceUrl": "https://github.com/dirtcodevet/vibecode-arcade",
+  "builds": {
+    "web": "web/index.html",
+    "linux": "linux/run.sh"
+  },
+  "remixOf": null
+}

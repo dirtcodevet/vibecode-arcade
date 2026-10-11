@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dirtcodevet/vibecode-arcade/blob/main/catalog/game.schema.json",
+  "title": "VibeCode Arcade package manifest (arcade.json)",
+  "description": "The structural contract for arcade.json. src/framework/rules.ts is authoritative and also checks what a schema cannot, such as whether declared build files exist.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slug", "title", "maker", "tagline", "license", "prompt", "sourceUrl", "builds", "remixOf"],
+  "properties": {
+    "slug": {
+      "$ref": "#/$defs/slug",
+      "description": "Lowercase words joined by single hyphens, e.g. star-garden."
+    },
+    "title": { "$ref": "#/$defs/text" },
+    "maker": { "$ref": "#/$defs/text" },
+    "tagline": { "$ref": "#/$defs/text" },
+    "license": {
+      "description": "An SPDX id from the accepted free, open-source list.",
+      "enum": [
+        "MIT",
+        "Apache-2.0",
+        "BSD-2-Clause",
+        "BSD-3-Clause",
+        "ISC",
+        "MPL-2.0",
+        "GPL-3.0-only",
+        "GPL-3.0-or-later",
+        "AGPL-3.0-only",
+        "Unlicense",
+        "CC0-1.0"
+      ]
+    },
+    "prompt": {
+      "description": "A short paragraph on how the game was vibecoded: at least 80 characters once trimmed.",
+      "type": "string",
+      "minLength": 80,
+      "pattern": "^\\s*\\S[\\s\\S]{78,}\\S\\s*$"
+    },
+    "sourceUrl": {
+      "description": "An http(s) link to the game's source code.",
+      "type": "string",
+      "pattern": "^https?://[^\\s/?#]+"
+    },
+    "builds": {
+      "description": "At least one build, keyed by platform. Each value is a file path relative to the package root.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "web": {
+          "allOf": [{ "$ref": "#/$defs/buildPath" }, { "type": "string", "pattern": "^web/" }],
+          "description": "Entry HTML file inside web/, e.g. web/index.html."
+        },
+        "linux": { "$ref": "#/$defs/buildPath", "description": "e.g. linux/run.sh" },
+        "windows": { "$ref": "#/$defs/buildPath", "description": "e.g. windows/game.exe" },
+        "darwin": { "$ref": "#/$defs/buildPath", "description": "e.g. darwin/Game.app/Contents/MacOS/Game" },
+        "android": { "$ref": "#/$defs/buildPath", "description": "e.g. android/game.apk" },
+        "ios": { "$ref": "#/$defs/buildPath", "description": "e.g. ios/game.ipa" }
+      }
+    },
+    "remixOf": {
+      "description": "null for an original game, or the slug of the game this one remixes.",
+      "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/slug" }]
+    }
+  },
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "text": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "buildPath": {
+      "description": "A plain relative path inside the package: no absolute paths, drive letters, UNC shares, URLs, backslashes, colons, empty segments, or dot-only segments such as ..",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*//)(?!.*/$)(?!(?:.*/)?\\.+(?:/|$))[^\\\\:\\u0000-\\u001f\\u007f]+$"
+    }
+  }
+}

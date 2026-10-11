@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reference Cartridge</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #171510;
+        color: #efe8d8;
+        font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        user-select: none;
+      }
+      canvas {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        cursor: crosshair;
+        touch-action: none;
+      }
+      .card {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        max-width: 420px;
+        padding: 18px 20px;
+        border: 1px solid #3a342a;
+        border-radius: 10px;
+        background: rgba(18, 17, 14, 0.82);
+        pointer-events: none;
+      }
+      .eyebrow {
+        margin: 0 0 4px;
+        color: #e2a23a;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      p {
+        margin: 0;
+        color: #b2a995;
+      }
+      .meta {
+        margin-top: 10px;
+        color: #7b7364;
+        font: 12px ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="court"></canvas>
+    <div class="card">
+      <p class="eyebrow">Reference cartridge</p>
+      <h1>Launched by the VibeCode Arcade shell.</h1>
+      <p>Click or tap anywhere to toss a ball.</p>
+      <p class="meta" id="meta"></p>
+    </div>
+    <script>
+      'use strict';
+      const canvas = document.getElementById('court');
+      const meta = document.getElementById('meta');
+      const ctx = canvas.getContext('2d');
+      const colors = ['#e2a23a', '#efe8d8', '#c98f33', '#d8cdb5'];
+      const balls = [];
+      const gravity = 1400;
+      let tossed = 0;
+      let width = 0;
+      let height = 0;
+
+      function resize() {
+        const ratio = window.devicePixelRatio || 1;
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.round(width * ratio);
+        canvas.height = Math.round(height * ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      function toss(x, y) {
+        tossed += 1;
+        balls.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 900,
+          vy: -500 - Math.random() * 500,
+          r: 12 + Math.random() * 14,
+          color: colors[tossed % colors.length],
+        });
+        if (balls.length > 40) balls.shift();
+        draw();
+        // A sandboxed frame without allow-same-origin has an opaque origin: "null".
+        meta.textContent = 'origin: ' + self.origin + ' · balls tossed: ' + tossed;
+      }
+
+      function step(dt) {
+        for (const ball of balls) {
+          ball.vy += gravity * dt;
+          ball.x += ball.vx * dt;
+          ball.y += ball.vy * dt;
+          if (ball.x < ball.r || ball.x > width - ball.r) {
+            ball.vx *= -0.9;
+            ball.x = Math.min(Math.max(ball.x, ball.r), width - ball.r);
+          }
+          if (ball.y > height - ball.r) {
+            ball.y = height - ball.r;
+            ball.vy *= -0.78;
+            ball.vx *= 0.985;
+            if (Math.abs(ball.vy) < 40) ball.vy = 0;
+          }
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = '#211e18';
+        ctx.fillRect(0, height - 6, width, 6);
+        for (const ball of balls) {
+          ctx.beginPath();
+          ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+          ctx.fillStyle = ball.color;
+          ctx.fill();
+        }
+      }
+
+      let last = performance.now();
+      function frame(now) {
+        const dt = Math.min((now - last) / 1000, 1 / 30);
+        last = now;
+        step(dt);
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      window.addEventListener('resize', resize);
+      canvas.addEventListener('pointerdown', (event) => toss(event.clientX, event.clientY));
+      resize();
+      toss(width * 0.55, height * 0.45);
+      toss(width * 0.7, height * 0.35);
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

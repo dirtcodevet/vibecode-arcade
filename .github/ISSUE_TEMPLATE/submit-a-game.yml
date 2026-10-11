@@ -1,0 +1,104 @@
+name: Submit a game
+description: Put your vibecoded game on the VibeCode Arcade shelf.
+title: "[Game] "
+labels: ["submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for bringing a game. Any engine, any platform.
+
+        Every game on the shelf is **free**, **open source**, and **vibecoded**, and ships with the prompt that made it.
+        The admission rules are code, and they're the same for everyone: [docs/rules.md](https://github.com/dirtcodevet/vibecode-arcade/blob/main/docs/rules.md).
+        Not ready yet? Say hi in [Discussions](https://github.com/dirtcodevet/vibecode-arcade/discussions) first.
+  - type: input
+    id: title
+    attributes:
+      label: Game title
+    validations:
+      required: true
+  - type: input
+    id: maker
+    attributes:
+      label: Maker
+      description: The name you want on the listing (you, your handle, or your team).
+    validations:
+      required: true
+  - type: input
+    id: tagline
+    attributes:
+      label: Tagline
+      description: One line that makes people want to click.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source repository
+      placeholder: https://github.com/you/your-game
+    validations:
+      required: true
+  - type: input
+    id: play
+    attributes:
+      label: Where can people play it right now?
+      description: Optional. A link to a web build, itch.io page, or release.
+  - type: dropdown
+    id: license
+    attributes:
+      label: License
+      options:
+        - MIT
+        - Apache-2.0
+        - BSD-2-Clause
+        - BSD-3-Clause
+        - ISC
+        - MPL-2.0
+        - GPL-3.0-only
+        - GPL-3.0-or-later
+        - AGPL-3.0-only
+        - Unlicense
+        - CC0-1.0
+    validations:
+      required: true
+  - type: checkboxes
+    id: builds
+    attributes:
+      label: Builds you ship
+      description: At least one. Any platform counts.
+      options:
+        - label: Web
+        - label: Windows
+        - label: macOS
+        - label: Linux
+        - label: Android
+        - label: iOS
+  - type: textarea
+    id: prompt
+    attributes:
+      label: How you vibecoded it
+      description: The tools you used, the prompts you gave, what you asked for and what came back. This ships with the game so others can learn from it and remix it.
+    validations:
+      required: true
+  - type: textarea
+    id: manifest
+    attributes:
+      label: arcade.json
+      description: Paste your manifest, or tell us it's in your repo root. See CONTRIBUTING.md for the format.
+      render: json
+  - type: input
+    id: remix
+    attributes:
+      label: Remix of
+      description: Optional. If you remixed another game, its slug or link, so credit flows back.
+  - type: checkboxes
+    id: promises
+    attributes:
+      label: The deal
+      options:
+        - label: It's free to play, with no paywall and no account required.
+          required: true
+        - label: The source is public under the license above.
+          required: true
+        - label: It was vibecoded, and I have the right to submit it.
+          required: true

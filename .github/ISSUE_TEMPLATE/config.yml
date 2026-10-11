@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ideas, questions, show-and-tell
+    url: https://github.com/dirtcodevet/vibecode-arcade/discussions
+    about: Talk shop with other vibecoders, share works in progress, or ask before you submit.

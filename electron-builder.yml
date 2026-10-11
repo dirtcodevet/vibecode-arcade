@@ -1,0 +1,38 @@
+# Packaging targets for the shell on all three desktops. Declared for v0.1,
+# not built yet: `pnpm dist` would produce installers into release/.
+appId: org.vibecodearcade.shell
+productName: VibeCode Arcade
+copyright: VibeCode Arcade contributors
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+extraResources:
+  # Conformance fixtures, resolved relative to the resources folder when packaged.
+  - from: examples/reference-cartridge
+    to: examples/reference-cartridge
+  - from: examples/broken-cartridge
+    to: examples/broken-cartridge
+asar: true
+win:
+  target:
+    - nsis
+    - portable
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.games
+linux:
+  target:
+    - AppImage
+    - deb
+    - tar.gz
+  category: Game
+  maintainer: VibeCode Arcade contributors
+publish: null

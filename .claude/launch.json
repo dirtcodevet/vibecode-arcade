@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "reveal",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "reveal", "dev", "--port", "5173", "--strictPort"],
+      "port": 5173
+    }
+  ]
+}

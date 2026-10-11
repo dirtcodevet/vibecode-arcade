@@ -1,0 +1,15 @@
+{
+  "$comment": "Replaceable art. Paths are relative to reveal/public. A missing file keeps the procedural version, so the scene never depends on a generated asset.",
+  "worlds": [
+    "slots/worlds/01.jpg",
+    "slots/worlds/02.jpg",
+    "slots/worlds/03.jpg",
+    "slots/worlds/04.jpg",
+    "slots/worlds/05.jpg",
+    "slots/worlds/06.jpg",
+    "slots/worlds/07.jpg",
+    "slots/worlds/08.jpg",
+    "slots/worlds/09.jpg"
+  ],
+  "music": "slots/music.mp3"
+}

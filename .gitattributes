@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.jpg binary
+*.png binary
+*.mp3 binary
+# Shell scripts must keep LF endings so native Linux/macOS builds run.
+*.sh text eol=lf
