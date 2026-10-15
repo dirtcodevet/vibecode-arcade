@@ -25,6 +25,7 @@ Two builds share one repo.
 - **Rules** runs every admission rule against the reference cartridge in `examples/reference-cartridge`, and **Launch** opens it inside the shell. That cartridge is also the first catalog listing: a real, admitted, playable package. The broken cartridge is a negative fixture and stays off the shelf.
 - `pnpm test` runs the rules, path-jail, catalog, and launch-order tests (Node's built-in runner).
 - `pnpm validate:catalog` admits `catalog/shelf.json` (and any package folders you pass) against `src/framework/`.
+- `pnpm audit:ci` fails on high or critical advisories in the root and reveal lockfiles. CI also runs gitleaks over git history.
 - `pnpm smoke` builds the app, admits and launches the reference cartridge, confirms the deliberately broken one is rejected, and saves screenshots to `.work/smoke/`.
 
 The rules live in `src/framework/` with no Electron imports. v0.1 hosts them in Electron; the end-state supervisor is Rust with Tauri as the window. See [docs/platforms.md](docs/platforms.md).

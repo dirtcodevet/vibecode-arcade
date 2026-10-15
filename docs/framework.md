@@ -184,7 +184,9 @@ real admitted package in this repo.
   spawn guards, and the security policies (permissions, navigation locks, window
   preferences, IPC sender and package-folder checks) against fake Electron objects.
 - `pnpm validate:catalog` admits `catalog/shelf.json` and, with extra args, any
-  package folders. GitHub Actions runs both on every push and pull request.
+  package folders. GitHub Actions runs tests, catalog admission, gitleaks over
+  git history, and `pnpm audit --audit-level=high` (root and `reveal/`) on every
+  push and pull request.
 - `pnpm smoke` builds, then starts the real app with `ARCADE_SMOKE=1`. It
   admits and launches both example packages, drives the UI (including launching
   the reference cartridge into the sandboxed frame and refusing the broken one),
