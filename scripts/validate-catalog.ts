@@ -13,7 +13,7 @@ function printIssues(title: string, issues: { where: string; reason: string }[])
   for (const issue of issues) console.error(`  ${issue.where}: ${issue.reason}`);
 }
 
-const targets = process.argv.slice(2);
+const targets = process.argv.slice(2).filter((arg) => arg !== '--');
 
 if (targets.length === 0) {
   const report = await checkShelf(repoRoot);

@@ -54,7 +54,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: pnpm
       - name: Audit root (fail on high or critical)
         run: pnpm audit --audit-level=high
       - name: Audit reveal (fail on high or critical)

@@ -203,6 +203,12 @@ describe('validate-catalog CLI', () => {
     assert.match(stdout, /admitted reference-cartridge/);
   });
 
+  it('ignores a literal -- so pnpm run forwarding does not look like a package folder', async () => {
+    const { stdout } = await validateCatalog(['--', 'examples/reference-cartridge']);
+    assert.match(stdout, /admitted reference-cartridge/);
+    assert.doesNotMatch(stdout, /failed admission/);
+  });
+
   it('rejects the broken cartridge when checked as a package', async () => {
     await assert.rejects(() => validateCatalog(['examples/broken-cartridge']), (error: NodeJS.ErrnoException & { stderr: string }) => {
       assert.match(error.stderr, /failed admission/);
