@@ -2,7 +2,6 @@ name: Catalog and rules
 
 on:
   push:
-    branches: [main]
   pull_request:
 
 jobs:
