@@ -6,7 +6,7 @@ import { Overlay } from './overlay/Overlay'
 import { SoundToggle } from './audio/SoundToggle'
 import { BEATS } from './beats'
 import { onBeatChange, scroll, scrollToTarget, startScrollTracking } from './scroll'
-import { REPO, RULES } from './links'
+import { GAMERS_BENCH, PRICEROOK, REPO, RULES } from './links'
 
 function webglAvailable() {
   try {
@@ -89,17 +89,25 @@ export function App() {
         )}
       </div>
       <header className="bar">
-        <a className="mark" href={REPO}>
-          <svg viewBox="0 0 32 32" aria-hidden="true">
-            <rect x="3" y="7" width="26" height="18" rx="3" fill="none" stroke="currentColor" strokeWidth="2" />
-            <circle cx="16" cy="16" r="3.2" fill="#f0a24b" />
-          </svg>
-          <span>VibeCode Arcade</span>
-        </a>
+        <div className="mark-block">
+          <a className="mark" href={REPO}>
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <rect x="3" y="7" width="26" height="18" rx="3" fill="none" stroke="currentColor" strokeWidth="2" />
+              <circle cx="16" cy="16" r="3.2" fill="#f0a24b" />
+            </svg>
+            <span>VibeCode Arcade</span>
+          </a>
+          <a className="sister" href={PRICEROOK} rel="noreferrer">
+            Sister of PriceRook
+          </a>
+        </div>
         <nav className="bar-links">
           <a href="#arcade">The Arcade</a>
           <a href="#how">How it works</a>
           <a href={RULES}>Rules</a>
+          <a href={GAMERS_BENCH} rel="noreferrer">
+            Discord
+          </a>
           <a href={REPO}>GitHub</a>
         </nav>
       </header>

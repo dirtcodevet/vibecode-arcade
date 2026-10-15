@@ -1,0 +1,12 @@
+# VibeCode Arcade
+
+Free, open-source home for games made by vibecoding. Every listing is free, ships its source, and ships the prompt that made it. No accounts, payments, DRM, tracking, or affiliate links.
+
+Live site: https://arcade.sockwaffle.com
+Source: https://github.com/dirtcodevet/vibecode-arcade
+Submit a game: https://github.com/dirtcodevet/vibecode-arcade/issues/new?template=submit-a-game.yml
+Admission rules: https://github.com/dirtcodevet/vibecode-arcade/blob/main/docs/rules.md
+
+Sister brand: PriceRook (https://pricerook.com), a PC game and hardware deals site. Talk shop in the PriceRook Discord's Gamers Bench: https://discord.gg/T3qyuDyqtA
+
+The public catalog is catalog/shelf.json. It lists only in-repo packages that pass src/framework/rules.ts. Painted storefront cards on the reveal site are examples, not catalog entries.

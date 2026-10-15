@@ -8,14 +8,22 @@ export function ChainCard({ parent, child, onOpen }: { parent: Listing; child: L
     <article className="mk-chain">
       <div className="mk-chain-pair">
         <button type="button" className="mk-chain-node" onClick={() => onOpen(parent.slug)} aria-label={`Open ${parent.title}, the original`}>
-          <img src={art(parent.art)} alt="" width={1600} height={900} loading="lazy" decoding="async" style={{ objectPosition: parent.focus }} />
+          {parent.art ? (
+            <img src={art(parent.art)} alt="" width={1600} height={900} loading="lazy" decoding="async" style={{ objectPosition: parent.focus }} />
+          ) : (
+            <span className="mk-thumb-plain" />
+          )}
           <span className="mk-chain-role">Original</span>
         </button>
         <span className="mk-chain-link" aria-hidden="true">
           <IconArrow />
         </span>
         <button type="button" className="mk-chain-node" onClick={() => onOpen(child.slug)} aria-label={`Open ${child.title}, the remix`}>
-          <img src={art(child.art)} alt="" width={1600} height={900} loading="lazy" decoding="async" style={{ objectPosition: child.focus }} />
+          {child.art ? (
+            <img src={art(child.art)} alt="" width={1600} height={900} loading="lazy" decoding="async" style={{ objectPosition: child.focus }} />
+          ) : (
+            <span className="mk-thumb-plain" />
+          )}
           <span className="mk-chain-role is-remix">Remix</span>
         </button>
       </div>

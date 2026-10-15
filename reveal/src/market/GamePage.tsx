@@ -76,10 +76,14 @@ function GameBody({ game, titleId, startWithRemix, onNavigate, onPlay, onSource 
   return (
     <article className="mk-gp">
       <div className="mk-gp-hero">
-        <img src={art(game.art)} alt={game.artAlt} width={1600} height={900} decoding="async" style={{ objectPosition: game.focus }} />
-        <span className="mk-ribbon mk-gp-ribbon">
+        {game.art ? (
+          <img src={art(game.art)} alt={game.artAlt} width={1600} height={900} decoding="async" style={{ objectPosition: game.focus }} />
+        ) : (
+          <div className="mk-gp-plain" aria-hidden="true" />
+        )}
+        <span className={`mk-ribbon mk-gp-ribbon${game.example ? '' : ' is-live'}`}>
           <i aria-hidden="true" />
-          Preview · example listing
+          {game.example ? 'Preview · example listing' : 'On the shelf · real package'}
         </span>
       </div>
 
@@ -189,28 +193,39 @@ function GameBody({ game, titleId, startWithRemix, onNavigate, onPlay, onSource 
           </section>
           <section className="mk-side-block">
             <h3 className="mk-side-h">Source</h3>
-            <a
-              className="mk-src"
-              href="#"
-              aria-disabled="true"
-              onClick={(e) => {
-                e.preventDefault()
-                onSource(game)
-              }}
-            >
-              <IconCode />
-              <span>{hostPath(game.sourceUrl)}</span>
-            </a>
-            <p className="mk-side-note">Example address: this listing is a preview.</p>
+            {game.example ? (
+              <a
+                className="mk-src"
+                href="#"
+                aria-disabled="true"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onSource(game)
+                }}
+              >
+                <IconCode />
+                <span>{hostPath(game.sourceUrl)}</span>
+              </a>
+            ) : (
+              <a className="mk-src" href={game.sourceUrl} target="_blank" rel="noreferrer">
+                <IconCode />
+                <span>{hostPath(game.sourceUrl)}</span>
+              </a>
+            )}
+            <p className="mk-side-note">
+              {game.example ? 'Example address: this listing is a preview.' : 'Public source for this admitted package.'}
+            </p>
           </section>
-          <section className="mk-side-block">
-            <h3 className="mk-side-h">Tags</h3>
-            <ul className="mk-tags">
-              {game.genres.map((g) => (
-                <li key={g}>{g}</li>
-              ))}
-            </ul>
-          </section>
+          {game.genres.length > 0 && (
+            <section className="mk-side-block">
+              <h3 className="mk-side-h">Tags</h3>
+              <ul className="mk-tags">
+                {game.genres.map((g) => (
+                  <li key={g}>{g}</li>
+                ))}
+              </ul>
+            </section>
+          )}
           <p className="mk-gp-free">Free · open source · no account · no tracking</p>
         </aside>
       </div>

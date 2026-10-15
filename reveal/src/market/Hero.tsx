@@ -73,25 +73,33 @@ export function Hero({
       >
         {/* Mouse convenience: the art opens the game page. Keyboard users get the title button. */}
         <div className="mk-hero-stage" onClick={() => onOpen(game.slug)}>
-          {games.map((g, i) => (
-            <img
-              key={g.slug}
-              className={`mk-hero-art${i === index ? ' is-on' : ''}${rotating ? ' is-drifting' : ''}`}
-              src={art(g.art)}
-              alt={i === index ? g.artAlt : ''}
-              aria-hidden={i === index ? undefined : true}
-              width={1600}
-              height={900}
-              decoding="async"
-              style={{ objectPosition: g.focus, animationPlayState: running ? 'running' : 'paused' }}
-            />
-          ))}
+          {games.map((g, i) =>
+            g.art ? (
+              <img
+                key={g.slug}
+                className={`mk-hero-art${i === index ? ' is-on' : ''}${rotating ? ' is-drifting' : ''}`}
+                src={art(g.art)}
+                alt={i === index ? g.artAlt : ''}
+                aria-hidden={i === index ? undefined : true}
+                width={1600}
+                height={900}
+                decoding="async"
+                style={{ objectPosition: g.focus, animationPlayState: running ? 'running' : 'paused' }}
+              />
+            ) : (
+              <div
+                key={g.slug}
+                className={`mk-hero-art mk-hero-plain${i === index ? ' is-on' : ''}`}
+                aria-hidden={i === index ? undefined : true}
+              />
+            ),
+          )}
           <div className="mk-hero-scrim" aria-hidden="true" />
         </div>
 
         <div className="mk-hero-body" key={game.slug}>
           <p className="mk-hero-kicker">
-            <span>Featured</span>
+            <span>{game.example ? 'Example · preview' : 'On the shelf'}</span>
             {parent && (
               <span className="mk-tag">
                 <IconBranch size={13} /> Remix of {parent.title}
@@ -151,7 +159,11 @@ export function Hero({
               aria-label={`Show ${g.title}`}
               onClick={() => setIndex(i)}
             >
-              <img src={art(g.art)} alt="" width={1600} height={900} loading="lazy" decoding="async" style={{ objectPosition: g.focus }} />
+              {g.art ? (
+                <img src={art(g.art)} alt="" width={1600} height={900} loading="lazy" decoding="async" style={{ objectPosition: g.focus }} />
+              ) : (
+                <span className="mk-thumb-plain" />
+              )}
               <span className="mk-thumb-title" aria-hidden="true">
                 {g.title}
               </span>

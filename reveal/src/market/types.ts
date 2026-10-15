@@ -50,16 +50,20 @@ export type Genre = (typeof GENRES)[number]
 
 /** A manifest plus the storefront-only fields this preview needs to draw a listing. */
 export interface Listing extends ArcadeManifest {
-  /** Path under reveal/public. */
-  art: string
+  /** Path under reveal/public. Omitted for catalog games without painted key art. */
+  art?: string
   artAlt: string
   /** CSS object-position, so tight crops keep the subject in frame. */
-  focus: string
+  focus?: string
   genres: Genre[]
   /** Engine + model, e.g. "Godot + Grok". */
   madeWith: string
   /** For remixes: what changed from the parent. */
   remixNote?: string
+  /** Preview-only painted listings. Real catalog games leave this unset. */
+  example?: boolean
+  /** Same-origin path to a playable web build, for real listings. */
+  playUrl?: string
 }
 
 export const LICENSE_NOTE: Record<License, { kind: string; copyleft: boolean }> = {

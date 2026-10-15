@@ -15,5 +15,5 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "assets"]
+  "include": ["src", "assets", "../catalog/shelf.json", "../examples/reference-cartridge/arcade.json"]
 }

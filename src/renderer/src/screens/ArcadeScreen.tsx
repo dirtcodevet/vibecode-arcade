@@ -41,11 +41,23 @@ export function ArcadeScreen() {
           </p>
         </section>
       ) : (
-        <ul className="listings">
-          {games.map((game) => (
-            <Listing key={game.slug} game={game} />
-          ))}
-        </ul>
+        <>
+          <ul className="listings">
+            {games.map((game) => (
+              <Listing key={game.slug} game={game} />
+            ))}
+          </ul>
+          <section className="card empty-shelf">
+            <h2>Bring yours next.</h2>
+            <p>
+              Listings here are real packages in this repo with a valid arcade.json. Community games land the same
+              way: submit an issue, pass the admission rules, then a reviewer adds the package to the shelf.
+            </p>
+            <p className="muted">
+              Read <a href="#deal">The Deal</a>, then check a package against the <a href="#rules">Rules</a>.
+            </p>
+          </section>
+        </>
       )}
 
       <section className="legend">
@@ -77,7 +89,11 @@ function Listing({ game }: { game: Manifest }) {
         <dt>prompt</dt>
         <dd>{game.prompt}</dd>
         <dt>source</dt>
-        <dd>{game.sourceUrl}</dd>
+        <dd>
+          <a href={game.sourceUrl} target="_blank" rel="noreferrer">
+            {game.sourceUrl}
+          </a>
+        </dd>
         <dt>builds</dt>
         <dd>{platforms.join(' · ')}</dd>
         <dt>remix</dt>

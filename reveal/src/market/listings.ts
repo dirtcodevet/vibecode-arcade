@@ -1,12 +1,13 @@
-import { PLATFORMS, type Listing, type Platform } from './types'
+import { shelfManifests } from '../catalog'
+import { PLATFORMS, type ArcadeManifest, type Listing, type Platform } from './types'
 
 /**
  * EXAMPLE LISTINGS. Preview data only: these games, makers, and repos do not exist.
- * The real shelf is empty until the community submits games.
+ * The real catalog is SHELF_LISTINGS, from catalog/shelf.json.
  * Every manifest field follows catalog/game.schema.json; art, artAlt, focus, genres, madeWith and remixNote are UI-only.
  * Ordered newest first, the way "New on the shelf" shows them.
  */
-export const LISTINGS: Listing[] = [
+const EXAMPLE_RAW: Listing[] = [
   {
     slug: 'rimespire',
     title: 'Rimespire',
@@ -200,10 +201,35 @@ export const LISTINGS: Listing[] = [
   },
 ]
 
+export const LISTINGS: Listing[] = EXAMPLE_RAW.map((listing) => ({ ...listing, example: true }))
+
 /** Resolves a public/ path against the deployed base (works at / and under a subpath). */
 export const art = (path: string) => `${import.meta.env.BASE_URL}${path}`
 
-const INDEX = new Map(LISTINGS.map((l) => [l.slug, l]))
+const SHELF_PRESENTATION: Record<string, Pick<Listing, 'artAlt' | 'madeWith' | 'genres' | 'playUrl'>> = {
+  'reference-cartridge': {
+    artAlt: 'A dark canvas court. Click or tap to toss bouncing balls.',
+    madeWith: 'Canvas + AI agent',
+    genres: [],
+    playUrl: `${import.meta.env.BASE_URL}play/reference-cartridge/index.html`,
+  },
+}
+
+function listingFromManifest(manifest: ArcadeManifest): Listing {
+  const extra = SHELF_PRESENTATION[manifest.slug]
+  return {
+    ...manifest,
+    artAlt: extra?.artAlt ?? `${manifest.title} on VibeCode Arcade.`,
+    madeWith: extra?.madeWith ?? 'Vibecoded',
+    genres: extra?.genres ?? [],
+    playUrl: extra?.playUrl,
+  }
+}
+
+/** Real catalog games from catalog/shelf.json. Never includes the painted example listings. */
+export const SHELF_LISTINGS: Listing[] = shelfManifests().map(listingFromManifest)
+
+const INDEX = new Map([...SHELF_LISTINGS, ...LISTINGS].map((l) => [l.slug, l]))
 
 export const bySlug = (slug: string | null | undefined): Listing | undefined => (slug ? INDEX.get(slug) : undefined)
 
@@ -224,11 +250,7 @@ export function ancestorsOf(game: Listing): Listing[] {
 
 export const platformsOf = (game: Listing): Platform[] => PLATFORMS.filter((p) => game.builds[p])
 
-const isListing = (l: Listing | undefined): l is Listing => !!l
-
-export const FEATURED: Listing[] = ['emberspire', 'lowtide-acres', 'ringbreakers', 'brass-fathom', 'nightwharf']
-  .map(bySlug)
-  .filter(isListing)
+export const FEATURED: Listing[] = SHELF_LISTINGS
 
 /** [parent, remix] pairs. */
 export const CHAINS: [Listing, Listing][] = LISTINGS.flatMap((child) => {

@@ -637,6 +637,13 @@
   animation: mk-drift var(--mk-dwell, 6s) linear both;
 }
 
+.mk-hero-plain {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(240, 162, 75, 0.28), transparent 55%),
+    radial-gradient(ellipse at 70% 80%, rgba(90, 40, 80, 0.55), transparent 50%),
+    #141018;
+}
+
 .mk-hero-scrim {
   position: absolute;
   inset: 0;
@@ -778,11 +785,17 @@
     box-shadow 0.25s;
 }
 
-.mk-thumb img {
+.mk-thumb img,
+.mk-thumb .mk-thumb-plain {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.mk-thumb .mk-thumb-plain {
+  position: absolute;
+  inset: 0;
 }
 
 .mk-thumb-title {
@@ -1077,6 +1090,53 @@
 .mk-card:hover .mk-card-art img,
 .mk-card:has(:focus-visible) .mk-card-art img {
   transform: scale(1.06);
+}
+
+.mk-card-fallback,
+.mk-thumb-plain,
+.mk-gp-plain {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(240, 162, 75, 0.28), transparent 55%),
+    radial-gradient(ellipse at 70% 80%, rgba(90, 40, 80, 0.55), transparent 50%),
+    #141018;
+  color: var(--mk-amber-ink);
+  font: 600 13px/1 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mk-example-badge {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 1;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--mk-amber-line);
+  background: rgba(14, 11, 20, 0.78);
+  color: var(--mk-amber-ink);
+  font: 600 11px/1.2 var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mk-gp-ribbon.is-live {
+  border-color: rgba(120, 200, 140, 0.45);
+  background: linear-gradient(180deg, rgba(80, 160, 110, 0.22), rgba(80, 160, 110, 0.08));
+  color: #d5efd4;
+}
+
+.mk-gp-ribbon.is-live i {
+  background: #8bd392;
+  box-shadow: 0 0 0 3px rgba(139, 211, 146, 0.2);
+}
+
+.mk-examples {
+  margin-top: clamp(28px, 4cqi, 44px);
 }
 
 .mk-card-art::after {
@@ -1615,11 +1675,17 @@
   background: #0a0810;
 }
 
-.mk-gp-hero img {
+.mk-gp-hero img,
+.mk-gp-hero .mk-gp-plain {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.mk-gp-hero .mk-gp-plain {
+  position: absolute;
+  inset: 0;
 }
 
 .mk-gp-hero::after {

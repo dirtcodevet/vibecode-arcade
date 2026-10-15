@@ -1,7 +1,7 @@
 import { useCallback, useId, useMemo, useState } from 'react'
 import { CONTRIBUTING, SUBMIT } from '../links'
 import type { Listing, Platform } from './types'
-import { CHAINS, FEATURED, LISTINGS, ON_PHONE, bySlug, hostPath } from './listings'
+import { CHAINS, FEATURED, LISTINGS, ON_PHONE, SHELF_LISTINGS, bySlug, hostPath } from './listings'
 import { WindowChrome, type Tab } from './WindowChrome'
 import { Hero } from './Hero'
 import { Filters, type GenreFilter } from './Filters'
@@ -34,28 +34,47 @@ export function Storefront() {
   }, [])
 
   const onPlay = useCallback(
-    (g: Listing) =>
-      say(
-        g.builds.web
-          ? `${g.title} is an example listing, so there's nothing to play yet. In the Arcade, Play runs ${g.builds.web} in a sandboxed frame.`
-          : `${g.title} is an example listing, so there's no build to download yet.`,
-      ),
+    (g: Listing) => {
+      if (g.example) {
+        say(
+          g.builds.web
+            ? `${g.title} is an example listing, so there's nothing to play yet. In the Arcade, Play runs ${g.builds.web} in a sandboxed frame.`
+            : `${g.title} is an example listing, so there's no build to download yet.`,
+        )
+        return
+      }
+      if (g.playUrl) {
+        window.open(g.playUrl, '_blank', 'noopener,noreferrer')
+        return
+      }
+      say(`${g.title} has no web build to play here. Open the source and run a packaged build.`)
+    },
     [say],
   )
-  const onSource = useCallback((g: Listing) => say(`${hostPath(g.sourceUrl)} is an example address. Real listings link to real source.`), [say])
+  const onSource = useCallback(
+    (g: Listing) => {
+      if (g.example) {
+        say(`${hostPath(g.sourceUrl)} is an example address. Real listings link to real source.`)
+        return
+      }
+      window.open(g.sourceUrl, '_blank', 'noopener,noreferrer')
+    },
+    [say],
+  )
 
   const q = query.trim().toLowerCase()
   const filtering = q !== '' || genre !== 'All' || platforms.length > 0
 
+  const searchable = useMemo(() => [...SHELF_LISTINGS, ...LISTINGS], [])
   const results = useMemo(
     () =>
-      LISTINGS.filter(
+      searchable.filter(
         (l) =>
           (genre === 'All' || l.genres.includes(genre)) &&
           (platforms.length === 0 || platforms.some((p) => l.builds[p])) &&
           (!q || [l.title, l.maker, l.tagline, l.madeWith].some((s) => s.toLowerCase().includes(q))),
       ),
-    [q, genre, platforms],
+    [searchable, q, genre, platforms],
   )
 
   const clear = () => {
@@ -81,15 +100,17 @@ export function Storefront() {
         <div className="mk-body">
           {tab === 'store' && (
             <div className="mk-pane">
-              <Hero games={FEATURED} hold={!!open} onOpen={openGame} onPlay={onPlay} onSource={onSource} />
+              {FEATURED.length > 0 && (
+                <Hero games={FEATURED} hold={!!open} onOpen={openGame} onPlay={onPlay} onSource={onSource} />
+              )}
 
               <section className="mk-shelf" aria-labelledby={shelfHeadId}>
                 <header className="mk-shelf-head">
                   <h3 id={shelfHeadId} className="mk-h3">
-                    {filtering ? 'Results' : 'New on the shelf'}
+                    {filtering ? 'Results' : 'On the shelf'}
                   </h3>
                   <p className="mk-row-note" aria-live="polite">
-                    {countLine}
+                    {filtering ? countLine : `${SHELF_LISTINGS.length} ${SHELF_LISTINGS.length === 1 ? 'real game' : 'real games'}`}
                   </p>
                 </header>
                 <Filters
@@ -100,44 +121,62 @@ export function Storefront() {
                   active={filtering}
                   onClear={clear}
                 />
-                {results.length > 0 ? (
+                {filtering ? (
+                  results.length > 0 ? (
+                    <div className="mk-grid">
+                      {results.map((g) => (
+                        <GameCard key={g.slug} game={g} onOpen={openGame} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mk-empty">
+                      <p className="mk-empty-title">
+                        Nothing matches {q ? `“${query.trim()}”` : 'those filters'}.
+                      </p>
+                      <p className="mk-empty-sub">
+                        Try clearing filters, or{' '}
+                        <a href={SUBMIT} target="_blank" rel="noreferrer">
+                          submit a game
+                        </a>{' '}
+                        to put a real listing here.
+                      </p>
+                      <button type="button" className="mk-btn" onClick={clear}>
+                        Clear filters
+                      </button>
+                    </div>
+                  )
+                ) : (
                   <div className="mk-grid">
-                    {results.map((g) => (
+                    {SHELF_LISTINGS.map((g) => (
                       <GameCard key={g.slug} game={g} onOpen={openGame} />
                     ))}
-                    {!filtering && (
-                      <>
-                        <SlotCard title="Your game here" body="Any engine, any platform. Free, open source, and shipped with its prompt." cta="Submit a game" href={SUBMIT} />
-                        <SlotCard title="Or remix one" body="Fork a prompt, change the world, credit the original. That's how the next game starts." cta="Read the guide" href={CONTRIBUTING} />
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="mk-empty">
-                    <p className="mk-empty-title">
-                      Nothing here yet — be the first:{' '}
-                      <a href={SUBMIT} target="_blank" rel="noreferrer">
-                        Submit a game
-                      </a>
-                    </p>
-                    <p className="mk-empty-sub">
-                      No example listing matches {q ? `“${query.trim()}”` : 'those filters'}. On the real shelf, that gap is yours to fill.
-                    </p>
-                    <button type="button" className="mk-btn" onClick={clear}>
-                      Clear filters
-                    </button>
+                    <SlotCard title="Your game here" body="Any engine, any platform. Free, open source, and shipped with its prompt." cta="Submit a game" href={SUBMIT} />
+                    <SlotCard title="Or remix one" body="Fork a prompt, change the world, credit the original. That's how the next game starts." cta="Read the guide" href={CONTRIBUTING} />
                   </div>
                 )}
               </section>
 
               {!filtering && (
                 <>
-                  <Row title="Remix chains" note="Every listing remembers where it came from, so credit flows back." wide>
+                  <section className="mk-examples" aria-labelledby="mk-examples-h">
+                    <header className="mk-shelf-head">
+                      <h3 id="mk-examples-h" className="mk-h3">
+                        Example listings
+                      </h3>
+                      <p className="mk-row-note">Painted previews. These games are not on the catalog.</p>
+                    </header>
+                    <div className="mk-grid">
+                      {LISTINGS.map((g) => (
+                        <GameCard key={g.slug} game={g} onOpen={openGame} />
+                      ))}
+                    </div>
+                  </section>
+                  <Row title="Remix chains" note="Example only: every real listing will remember where it came from, so credit flows back." wide>
                     {CHAINS.map(([parent, child]) => (
                       <ChainCard key={child.slug} parent={parent} child={child} onOpen={openGame} />
                     ))}
                   </Row>
-                  <Row title="Plays on your phone" note="A web build runs in any phone browser. Some ship Android and iOS builds too.">
+                  <Row title="Plays on your phone" note="Example only: a web build runs in any phone browser. Some ship Android and iOS builds too.">
                     {ON_PHONE.map((g) => (
                       <GameCard key={g.slug} game={g} onOpen={openGame} compact />
                     ))}
@@ -147,8 +186,8 @@ export function Storefront() {
 
               <footer className="mk-store-foot">
                 <p>
-                  <strong>The real shelf is empty until the community submits games.</strong> These ten listings are examples, painted for this
-                  preview. Every real one is free, open source, and ships with its prompt.
+                  <strong>The catalog lists only real, admitted packages.</strong> Painted cards are examples. Every real listing is free, open
+                  source, and ships with its prompt. No prices, DRM, or affiliate links.
                 </p>
                 <a className="mk-btn mk-btn-primary" href={SUBMIT} target="_blank" rel="noreferrer">
                   Submit a game

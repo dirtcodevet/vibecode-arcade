@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dirtcodevet/vibecode-arcade/blob/main/catalog/shelf.schema.json",
+  "title": "VibeCode Arcade shelf",
+  "description": "The public catalog. Each listing names an in-repo package folder that contains arcade.json. Games are admitted by src/framework/rules.ts; this file does not duplicate manifests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["games"],
+  "properties": {
+    "games": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["packageDir"],
+        "properties": {
+          "packageDir": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Path relative to the repo root of a package folder that contains arcade.json.",
+            "pattern": "^(?!/)(?!.*//)(?!.*/$)(?!(?:.*/)?\\.+(?:/|$))[^\\\\:\\u0000-\\u001f\\u007f]+$"
+          }
+        }
+      }
+    }
+  }
+}
