@@ -6,7 +6,11 @@ function Node({ game, role, onClick }: { game: Listing; role: string; onClick?: 
   const inner = (
     <>
       <span className="mk-ln-thumb">
-        <img src={art(game.art)} alt="" width={1600} height={900} loading="lazy" decoding="async" style={{ objectPosition: game.focus }} />
+        {game.art ? (
+          <img src={art(game.art)} alt="" width={1600} height={900} loading="lazy" decoding="async" style={{ objectPosition: game.focus }} />
+        ) : (
+          <span className="mk-thumb-plain" />
+        )}
       </span>
       <span className="mk-ln-text">
         <span className="mk-ln-role">{role}</span>

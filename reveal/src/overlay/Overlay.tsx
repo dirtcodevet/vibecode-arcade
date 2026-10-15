@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { CONTRIBUTING, DISCUSS, REPO, RULES, SUBMIT } from '../links'
+import { CONTRIBUTING, DISCUSS, GAMERS_BENCH, PRICEROOK, REPO, RULES, SUBMIT } from '../links'
 import { MarketSection } from '../market/MarketSection'
 
 const MANIFEST = `{
@@ -103,9 +103,10 @@ export function Overlay() {
           <p className="kicker" data-reveal>
             Day one
           </p>
-          <h2 data-reveal>The shelf is empty. On purpose.</h2>
+          <h2 data-reveal>One real package. The rest is yours.</h2>
           <p className="lede" data-reveal>
-            The first games come from you. Any engine, any platform. <strong>Bring your games.</strong>
+            The catalog lists the playable reference cartridge so you can see a valid <code>arcade.json</code>. Community games come next. Any engine,
+            any platform. <strong>Bring your games.</strong>
           </p>
           <div className="ctas" data-reveal>
             <a className="btn primary" href={SUBMIT}>
@@ -178,8 +179,19 @@ export function Overlay() {
 
           <footer className="foot">
             <p>
-              VibeCode Arcade 0.1 · MIT licensed · This page was vibecoded too: the scene is three.js, the windows were painted by Grok Imagine, and
-              the score is Google Lyria. <a href={REPO}>Source on GitHub</a>
+              VibeCode Arcade 0.1 · MIT licensed · Sister of{' '}
+              <a href={PRICEROOK} rel="noreferrer">
+                PriceRook
+              </a>{' '}
+              ·{' '}
+              <a href={GAMERS_BENCH} rel="noreferrer">
+                Gamers Bench
+              </a>{' '}
+              on Discord · This page was vibecoded too: the scene is three.js, the windows were painted by Grok Imagine, and the score is Google
+              Lyria.{' '}
+              <a href={REPO} rel="noreferrer">
+                Source on GitHub
+              </a>
             </p>
           </footer>
         </div>

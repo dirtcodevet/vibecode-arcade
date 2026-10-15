@@ -124,5 +124,10 @@ too.
   CI. Tests keep it in sync with the rules module: same fields, licenses, slug
   pattern, URL pattern, and path-jail verdicts. A schema can't check whether
   files exist, so `rules.ts` stays authoritative.
+- [`catalog/shelf.json`](../catalog/shelf.json) is the public catalog. Each
+  listing is `{ "packageDir": "..." }` pointing at an in-repo package.
+  `pnpm validate:catalog` (and CI) run `admit()` on every listed `arcade.json`.
 - [`test/rules.test.ts`](../test/rules.test.ts) has one deliberate break per case
   and asserts it trips exactly the rule it's meant to.
+- [`test/catalog.test.ts`](../test/catalog.test.ts) covers shelf shape, path
+  jail on `packageDir`, duplicate slugs, and the validate-catalog CLI.

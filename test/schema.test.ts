@@ -22,6 +22,12 @@ interface Schema {
 
 const schema = readJson('catalog', 'game.schema.json') as Schema;
 const validate = new Ajv2020({ allErrors: true, strict: true }).compile(schema);
+const shelfSchema = readJson('catalog', 'shelf.schema.json') as {
+  additionalProperties: boolean;
+  required: string[];
+  properties: { games: { items: { additionalProperties: boolean; required: string[] } } };
+};
+const validateShelf = new Ajv2020({ allErrors: true, strict: true }).compile(shelfSchema);
 
 describe('catalog/game.schema.json agrees with the rules module', () => {
   it('accepts the reference manifest, which the rules also admit', () => {
@@ -60,5 +66,20 @@ describe('catalog/game.schema.json agrees with the rules module', () => {
       const manifest = { ...referenceManifest(), builds: { linux: path } };
       assert.equal(validate(manifest), pathProblem(path) === null, JSON.stringify(path));
     }
+  });
+});
+
+describe('catalog/shelf.schema.json', () => {
+  it('accepts the real shelf and forbids extra fields', () => {
+    const shelf = readJson('catalog', 'shelf.json');
+    assert.equal(validateShelf(shelf), true, JSON.stringify(validateShelf.errors));
+    assert.equal(shelfSchema.additionalProperties, false);
+    assert.equal(shelfSchema.properties.games.items.additionalProperties, false);
+    assert.deepEqual(shelfSchema.required, ['games']);
+    assert.deepEqual(shelfSchema.properties.games.items.required, ['packageDir']);
+  });
+
+  it('rejects a priced listing', () => {
+    assert.equal(validateShelf({ games: [{ packageDir: 'examples/reference-cartridge', price: 1 }] }), false);
   });
 });

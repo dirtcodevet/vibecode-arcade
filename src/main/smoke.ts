@@ -36,9 +36,9 @@ export async function runSmoke(win: BrowserWindow, host: Host): Promise<number> 
   await loaded(win);
   await shown(win);
   await waitFor(win, `document.querySelector('[data-screen="arcade"]') !== null`);
-  checks.statusShowsZeroGames = await evaluate<boolean>(
+  checks.statusShowsCatalogCount = await evaluate<boolean>(
     win,
-    `document.querySelector('[data-status]')?.textContent.includes('0 games') ?? false`,
+    `document.querySelector('[data-status]')?.textContent.includes('1 game') ?? false`,
   );
   await capture(win, join(outDir, 'arcade.png'));
 

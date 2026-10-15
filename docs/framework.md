@@ -11,7 +11,7 @@ src/shared/      the bridge contract between UI and host (three calls) + bundled
 src/main/        Electron host: window, arcade-game:// protocol, IPC, native spawn, smoke run
 src/preload/     contextBridge: exposes exactly the three bridge calls
 src/renderer/    React UI: Arcade, The Deal, Rules, game frame, status line
-catalog/         shelf.json (the listings, empty) and game.schema.json (manifest schema)
+catalog/         shelf.json (in-repo package folders on the public catalog) and game.schema.json (manifest schema)
 examples/        reference-cartridge (passes) and broken-cartridge (fails on purpose)
 ```
 
@@ -168,18 +168,25 @@ A Tauri host implements the same three calls as commands.
 
 ## The shelf
 
-`catalog/shelf.json` is `{ "games": [] }`. It's bundled into the renderer at
-build time, and its length is the "N games" in the status line. It is empty on
-purpose: the first listings come from the community. The example packages are
-conformance fixtures, not listings.
+`catalog/shelf.json` names in-repo packages as `{ "packageDir": "..." }`. The
+renderer bundles those `arcade.json` files at build time, and the length is the
+"N games" in the status line. CI and `pnpm validate:catalog` run `admit()` on
+every listed package. Only real, verifiable packages go here — never invented
+games, prices, or affiliate links. The broken cartridge stays a negative
+fixture and is not listed. The reference cartridge is listed because it is a
+real admitted package in this repo.
 
 ## Checks
 
 - `pnpm test` runs Node's built-in test runner over `test/*.test.ts`: rules,
-  path jail, launch order, schema agreement, loader (including junction
+  path jail, catalog/shelf admission, launch order, schema agreement, loader (including junction
   escapes), the host's package service and `arcade-game://` resolver, native
   spawn guards, and the security policies (permissions, navigation locks, window
   preferences, IPC sender and package-folder checks) against fake Electron objects.
+- `pnpm validate:catalog` admits `catalog/shelf.json` and, with extra args, any
+  package folders. GitHub Actions runs tests, catalog admission, gitleaks over
+  git history, and `pnpm audit --audit-level=high` (root and `reveal/`) on every
+  push and pull request.
 - `pnpm smoke` builds, then starts the real app with `ARCADE_SMOKE=1`. It
   admits and launches both example packages, drives the UI (including launching
   the reference cartridge into the sandboxed frame and refusing the broken one),

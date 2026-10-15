@@ -8,6 +8,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+# copied onto the reveal at build/dev time from examples/reference-cartridge/web
+reveal/public/play/
 # local working files (generation scratch, smoke captures)
 .work/
 *.tsbuildinfo

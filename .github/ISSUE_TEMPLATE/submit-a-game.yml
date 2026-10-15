@@ -10,7 +10,9 @@ body:
 
         Every game on the shelf is **free**, **open source**, and **vibecoded**, and ships with the prompt that made it.
         The admission rules are code, and they're the same for everyone: [docs/rules.md](https://github.com/dirtcodevet/vibecode-arcade/blob/main/docs/rules.md).
-        Not ready yet? Say hi in [Discussions](https://github.com/dirtcodevet/vibecode-arcade/discussions) first.
+        After a human review, a PR adds your package to `catalog/shelf.json`. CI runs `pnpm validate:catalog` against the same rules the desktop shell uses.
+
+        Not ready yet? Say hi in [Discussions](https://github.com/dirtcodevet/vibecode-arcade/discussions) or the PriceRook Discord [Gamers Bench](https://discord.gg/T3qyuDyqtA) first.
   - type: input
     id: title
     attributes:
@@ -84,8 +86,10 @@ body:
     id: manifest
     attributes:
       label: arcade.json
-      description: Paste your manifest, or tell us it's in your repo root. See CONTRIBUTING.md for the format.
+      description: Paste the arcade.json from your repo root. CI and the desktop shell admit this file against catalog/game.schema.json and src/framework/rules.ts. See CONTRIBUTING.md.
       render: json
+    validations:
+      required: true
   - type: input
     id: remix
     attributes:

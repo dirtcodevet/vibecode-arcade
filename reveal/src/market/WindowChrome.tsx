@@ -64,7 +64,7 @@ export function WindowChrome({
       <div className="mk-chrome-trail">
         <span className="mk-ribbon">
           <i aria-hidden="true" />
-          Preview · example listings
+          Live catalog · examples marked
         </span>
         <span className="mk-noacct">No account needed</span>
       </div>

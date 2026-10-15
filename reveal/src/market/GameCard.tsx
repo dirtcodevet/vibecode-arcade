@@ -11,21 +11,30 @@ export function GameCard({ game, onOpen, compact = false }: { game: Listing; onO
   const parent = bySlug(game.remixOf)
   return (
     <article className={`mk-card${compact ? ' is-compact' : ''}`}>
-      <div className="mk-card-art">
-        <img
-          src={art(game.art)}
-          alt={game.artAlt}
-          width={1600}
-          height={900}
-          loading="lazy"
-          decoding="async"
-          style={{ objectPosition: game.focus }}
-        />
+      <div className={`mk-card-art${game.art ? '' : ' is-plain'}`}>
+        {game.art ? (
+          <img
+            src={art(game.art)}
+            alt={game.artAlt}
+            width={1600}
+            height={900}
+            loading="lazy"
+            decoding="async"
+            style={{ objectPosition: game.focus }}
+          />
+        ) : (
+          <div className="mk-card-fallback" aria-hidden="true">
+            <span>Playable</span>
+          </div>
+        )}
         {parent && (
           <span className="mk-tag mk-card-tag">
             <IconBranch size={13} />
             <span className="mk-tag-text">Remix of {parent.title}</span>
           </span>
+        )}
+        {game.example && (
+          <span className="mk-example-badge">Example</span>
         )}
       </div>
       <div className="mk-card-body">

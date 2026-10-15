@@ -14,8 +14,8 @@ export function MarketSection() {
           This is what the shelf becomes.
         </h2>
         <p className="mk-lede">
-          Every game free, open source, and shipped with the prompt that made it. Have a look around: these are example listings until the first real
-          games arrive.
+          Every game free, open source, and shipped with the prompt that made it. The first real listing is the playable reference cartridge. Painted
+          cards below are examples, marked as such, so you can see a full shelf.
         </p>
       </div>
       <Storefront />

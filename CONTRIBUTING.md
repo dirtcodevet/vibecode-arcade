@@ -2,14 +2,15 @@
 
 VibeCode Arcade is a home for games made by vibecoding. Every game is free, open source, and ships with the prompt that made it. Any engine, any language, any platform.
 
-The shelf starts empty on purpose. The first games come from you.
+The catalog lists only real, admitted packages. The first listing is the playable reference cartridge in this repo. Community games come next.
 
 ## Get on the shelf
 
 1. **Make a game.** Three.js, Godot, Phaser, Unity, Love2D, Bevy, plain C: if you vibecoded it, it counts.
 2. **Publish the source** under a free license (list below).
 3. **Add `arcade.json`** to your repo root, next to your build folders.
-4. **Open a [Submit a game](https://github.com/dirtcodevet/vibecode-arcade/issues/new?template=submit-a-game.yml) issue.** It gets checked against the same open rules the desktop shell runs, then it goes on the shelf.
+4. **Check it:** clone this repo and run `pnpm validate:catalog -- path/to/your-game`.
+5. **Open a [Submit a game](https://github.com/dirtcodevet/vibecode-arcade/issues/new?template=submit-a-game.yml) issue** and paste your `arcade.json`. A reviewer lands it in `catalog/shelf.json`. CI runs the same admission rules the desktop shell uses.
 
 Not ready yet? Share a work in progress in [Discussions](https://github.com/dirtcodevet/vibecode-arcade/discussions).
 
@@ -68,5 +69,9 @@ Clone this repo and run the shell (`pnpm install`, then `pnpm dev`). The **Rules
 
 - **Desktop shell** (repo root): electron-vite + React + TypeScript. `pnpm install`, `pnpm dev`, `pnpm test`, `pnpm smoke`. The rules live in `src/framework`, which has no Electron imports. See [docs/framework.md](docs/framework.md) and [docs/platforms.md](docs/platforms.md).
 - **The reveal** (`reveal/`): the three.js site. `pnpm --dir reveal install`, then `pnpm --dir reveal dev`. Art and music are replaceable slots listed in `reveal/assets/slots.json`. Regenerate them with `reveal/tools/gen_scene.py` and `reveal/tools/gen_art.py` (Grok Imagine, needs `XAI_API_KEY`) and `reveal/tools/gen_music.py` (Lyria, needs `GEMINI_API_KEY`). Every slot has a procedural fallback.
+
+To add an already-admitted package to the public catalog, list it in [`catalog/shelf.json`](catalog/shelf.json) as `{ "packageDir": "examples/your-game" }` and run `pnpm validate:catalog`. Do not invent listings. Do not add price, DRM, or affiliate fields.
+
+Sister brand: [PriceRook](https://pricerook.com) (PC game and hardware deals). Arcade stays free; talk shop in the [Gamers Bench](https://discord.gg/T3qyuDyqtA) Discord.
 
 Small, focused pull requests are easiest to review. Keep it free, keep it open, keep it vibecoded.

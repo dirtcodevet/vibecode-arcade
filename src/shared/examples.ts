@@ -1,5 +1,6 @@
-// Package folders that ship with the shell, relative to the app root. They are
-// conformance fixtures, not shelf listings: catalog/shelf.json stays empty.
+// Package folders that ship with the shell, relative to the app root.
+// The reference cartridge is also the first catalog listing (catalog/shelf.json).
+// The broken cartridge stays a negative fixture and is never listed.
 
 export interface ExamplePackage {
   dir: string;

@@ -93,6 +93,13 @@ a {
   pointer-events: auto;
 }
 
+.mark-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: auto;
+}
+
 .mark {
   display: inline-flex;
   align-items: center;
@@ -101,6 +108,18 @@ a {
   text-decoration: none;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.sister {
+  margin-left: 36px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.sister:hover {
+  color: var(--ember);
 }
 
 .mark svg {
@@ -568,6 +587,10 @@ h2 {
 .foot p {
   max-width: 46rem;
   margin: 0 auto;
+}
+
+.foot a {
+  color: var(--ink-soft);
 }
 
 /* ---------- small screens ---------- */

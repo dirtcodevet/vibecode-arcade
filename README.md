@@ -4,7 +4,7 @@
 
 A home for games made by vibecoding, gathered from the whole community and brought to the web, Windows, macOS, Linux, Android, and iOS. Every game is free, every game ships its source, and every game ships the prompt that made it, so the next game can start as a remix.
 
-**The shelf is empty on purpose. [Bring your games.](CONTRIBUTING.md)**
+**The catalog lists one real package: the playable reference cartridge. Community games come next. [Bring yours.](CONTRIBUTING.md)**
 
 [arcade.sockwaffle.com](https://arcade.sockwaffle.com/) · [Submit a game](https://github.com/dirtcodevet/vibecode-arcade/issues/new?template=submit-a-game.yml) · [Discussions](https://github.com/dirtcodevet/vibecode-arcade/discussions) · [The rules](docs/rules.md)
 
@@ -21,9 +21,11 @@ Two builds share one repo.
 
 ### The shell
 
-- `pnpm dev` opens the window: **Arcade** (the shelf: `0 games`), **The Deal**, and **Rules**.
-- **Rules** runs every admission rule against the reference cartridge in `examples/reference-cartridge`, and **Launch** opens it inside the shell. That cartridge is a conformance fixture, not a game on the shelf.
-- `pnpm test` runs the rules, path-jail, and launch-order tests (Node's built-in runner).
+- `pnpm dev` opens the window: **Arcade** (the shelf from `catalog/shelf.json`), **The Deal**, and **Rules**.
+- **Rules** runs every admission rule against the reference cartridge in `examples/reference-cartridge`, and **Launch** opens it inside the shell. That cartridge is also the first catalog listing: a real, admitted, playable package. The broken cartridge is a negative fixture and stays off the shelf.
+- `pnpm test` runs the rules, path-jail, catalog, and launch-order tests (Node's built-in runner).
+- `pnpm validate:catalog` admits `catalog/shelf.json` (and any package folders you pass) against `src/framework/`.
+- `pnpm audit:ci` fails on high or critical advisories in the root and reveal lockfiles. CI also runs gitleaks over git history.
 - `pnpm smoke` builds the app, admits and launches the reference cartridge, confirms the deliberately broken one is rejected, and saves screenshots to `.work/smoke/`.
 
 The rules live in `src/framework/` with no Electron imports. v0.1 hosts them in Electron; the end-state supervisor is Rust with Tauri as the window. See [docs/platforms.md](docs/platforms.md).
@@ -41,7 +43,7 @@ The site lives at [arcade.sockwaffle.com](https://arcade.sockwaffle.com/). Build
 
 ## What's not here
 
-No accounts. No payments. No DRM. No tracking. No games on the shelf yet: that's the point.
+No accounts. No payments. No DRM. No tracking. No affiliate links in Arcade listings. The catalog only lists admitted in-repo packages — never invented games.
 
 ## License
 
